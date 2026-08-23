@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="面向成年零基础学习者的吉他与乐理互动教程">
+  <title>弦上明白 · 零基础吉他与乐理自学教程</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到正文</a>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="主导航">
+      <div class="brand">
+        <a href="#/home" class="brand-mark" aria-label="返回首页">
+          <span class="brand-icon">弦</span>
+          <span><strong>弦上明白</strong><small>吉他 × 乐理</small></span>
+        </a>
+        <button class="icon-button close-nav" id="close-nav" aria-label="关闭菜单">×</button>
+      </div>
+      <nav class="primary-nav" id="primary-nav">
+        <a href="#/home" data-route="home"><span>⌂</span>学习首页</a>
+        <a href="#/course" data-route="course"><span>▤</span>完整课程</a>
+        <a href="#/practice" data-route="practice"><span>◷</span>今日练习</a>
+      </nav>
+      <div class="nav-section-label">互动实验室</div>
+      <nav class="primary-nav">
+        <a href="#/fretboard" data-route="fretboard"><span>♬</span>指板实验室</a>
+        <a href="#/chords" data-route="chords"><span>⌘</span>和弦实验室</a>
+        <a href="#/rhythm" data-route="rhythm"><span>♩</span>节奏实验室</a>
+        <a href="#/map" data-route="map"><span>◇</span>乐理知识地图</a>
+        <a href="#/glossary" data-route="glossary"><span>字</span>小白词典</a>
+      </nav>
+    </aside>
+
+    <div class="mobile-overlay" id="mobile-overlay"></div>
+    <section class="main-shell">
+      <header class="topbar">
+        <button class="icon-button menu-button" id="menu-button" aria-label="打开菜单">☰</button>
+        <div class="breadcrumb" id="breadcrumb">学习首页</div>
+        <div class="top-actions">
+          <button class="quiet-button" id="focus-button" title="切换专注阅读">专注阅读</button>
+          <a class="primary-button compact" href="#/practice">开始练习</a>
+        </div>
+      </header>
+      <main id="main-content" tabindex="-1"></main>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="data/course.js"></script>
+  <script src="data/lessons-stage1.js"></script>
+  <script src="data/lessons-stage2.js"></script>
+  <script src="data/lessons-stage3.js"></script>
+  <script src="data/lessons-stage4.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+# 浏览器测试产生的临时文件与截图不进入仓库
+.playwright-cli/
+output/
