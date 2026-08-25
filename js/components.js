@@ -16,6 +16,69 @@
     return 440 * Math.pow(2, (midi - 69) / 12);
   }
 
+  // 使用 YIN 差分法从麦克风波形中估算基频，避免把较强的泛音误判成目标音。
+  function detectPitch(samples, sampleRate, minFrequency = 70, maxFrequency = 380) {
+    if (!samples || samples.length < 1024 || !sampleRate) return null;
+    const length = Math.min(samples.length, 4096);
+    let mean = 0;
+    let energy = 0;
+    for (let index = 0; index < length; index += 1) mean += samples[index];
+    mean /= length;
+    for (let index = 0; index < length; index += 1) {
+      const centered = samples[index] - mean;
+      energy += centered * centered;
+    }
+    const volume = Math.sqrt(energy / length);
+    if (volume < .008) return null;
+
+    const minimumLag = Math.max(2, Math.floor(sampleRate / maxFrequency));
+    const maximumLag = Math.min(Math.ceil(sampleRate / minFrequency), Math.floor(length / 2));
+    const compareLength = length - maximumLag;
+    const difference = new Float32Array(maximumLag + 1);
+    for (let lag = 1; lag <= maximumLag; lag += 1) {
+      let sum = 0;
+      for (let index = 0; index < compareLength; index += 1) {
+        const delta = (samples[index] - mean) - (samples[index + lag] - mean);
+        sum += delta * delta;
+      }
+      difference[lag] = sum;
+    }
+
+    let runningSum = 0;
+    for (let lag = 1; lag <= maximumLag; lag += 1) {
+      runningSum += difference[lag];
+      difference[lag] = runningSum ? difference[lag] * lag / runningSum : 1;
+    }
+
+    let bestLag = -1;
+    for (let lag = minimumLag; lag < maximumLag; lag += 1) {
+      if (difference[lag] < .17) {
+        while (lag + 1 <= maximumLag && difference[lag + 1] < difference[lag]) lag += 1;
+        bestLag = lag;
+        break;
+      }
+    }
+    if (bestLag < 0) {
+      let bestValue = .38;
+      for (let lag = minimumLag; lag <= maximumLag; lag += 1) {
+        if (difference[lag] < bestValue) {
+          bestValue = difference[lag];
+          bestLag = lag;
+        }
+      }
+    }
+    if (bestLag < 0) return null;
+
+    const left = difference[bestLag - 1] || difference[bestLag];
+    const center = difference[bestLag];
+    const right = difference[bestLag + 1] || difference[bestLag];
+    const curve = left - 2 * center + right;
+    const refinedLag = curve ? bestLag + .5 * (left - right) / curve : bestLag;
+    const frequency = sampleRate / refinedLag;
+    if (!Number.isFinite(frequency) || frequency < minFrequency || frequency > maxFrequency) return null;
+    return { frequency, clarity: 1 - center, volume };
+  }
+
   let audioContext;
   function getAudioContext() {
     audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
@@ -406,5 +469,5 @@
     return `<div class="fretboard-wrap"><div class="fretboard">${rows}</div><div class="fret-numbers">${numbers}</div></div>`;
   }
 
-  window.GuitarComponents = { noteNames, flatNames, openMidi, chordData, chordSvg, chordPositions, playChord, playTabSequence, renderFretboard, renderLessonDiagram, playTone, playClick, escapeHtml, noteFromMidi };
+  window.GuitarComponents = { noteNames, flatNames, openMidi, chordData, chordSvg, chordPositions, playChord, playTabSequence, renderFretboard, renderLessonDiagram, playTone, playClick, escapeHtml, noteFromMidi, detectPitch };
 })();

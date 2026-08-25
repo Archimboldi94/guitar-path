@@ -13,6 +13,26 @@
   let rhythmPattern = 'quarter';
   let rhythmPlayer = null;
   let rhythmPlayerReopen = null;
+  let tunerStream = null;
+  let tunerAudioContext = null;
+  let tunerSource = null;
+  let tunerAnalyser = null;
+  let tunerFrame = null;
+  let tunerTarget = 'auto';
+  let tunerReferenceMidi = null;
+  let tunerHistory = [];
+  let tunerLastAnalysis = 0;
+  let tunerBuffer = null;
+  let tunerMisses = 0;
+
+  const standardTuning = [
+    { string: 6, midi: 40, note: 'E2', frequency: 82.41 },
+    { string: 5, midi: 45, note: 'A2', frequency: 110 },
+    { string: 4, midi: 50, note: 'D3', frequency: 146.83 },
+    { string: 3, midi: 55, note: 'G3', frequency: 196 },
+    { string: 2, midi: 59, note: 'B3', frequency: 246.94 },
+    { string: 1, midi: 64, note: 'E4', frequency: 329.63 }
+  ];
 
   function showToast(message) {
     toast.textContent = message;
@@ -85,7 +105,7 @@
       </section>
 
       <section class="home-section">
-        <div class="home-section-heading"><div><div class="eyebrow">从这里选择</div><h2>四个阶段，先建立真正能用的基础</h2></div><a href="#/course">查看完整课程路线 →</a></div>
+        <div class="home-section-heading"><div><div class="eyebrow">从这里选择</div><h2>五个阶段，先建立真正能用的基础</h2></div><a href="#/course">查看完整课程路线 →</a></div>
         <div class="home-stage-grid">
           ${course.stages.slice(0,5).map((stage,index) => `<a class="home-stage-card stage-tone-${index + 1}" href="#/lesson/${stage.id}-1">
             <div class="home-stage-top"><span>阶段 ${String(stage.id).padStart(2,'0')}</span><b>${stage.tone}</b></div>
@@ -102,7 +122,8 @@
           ${[
             ['#/fretboard','01','指板实验室','点一下就能找音、看音阶和音程','六根弦 · 12 个音'],
             ['#/chords','02','和弦实验室','看清每根手指的位置，并试听和弦','指法图 · 真实听感'],
-            ['#/rhythm','03','节奏实验室','打开节拍器，跟着扫弦格子练习','节拍器 · 扫弦型']
+            ['#/rhythm','03','节奏实验室','打开节拍器，跟着扫弦格子练习','节拍器 · 扫弦型'],
+            ['#/tuner','04','琴弦调音器','用麦克风判断每根弦偏高还是偏低','实时收音 · 标准调弦']
           ].map(item => `<a class="home-lab-card" href="${item[0]}"><span class="home-lab-number">${item[1]}</span><div><h3>${item[2]}</h3><p>${item[3]}</p><small>${item[4]}</small></div><b>↗</b></a>`).join('')}
         </div>
         <div class="home-reference-links"><span>随手查一查</span><a href="#/map">知识地图 →</a><a href="#/glossary">小白词典 →</a><a href="#/practice">生成今日练习 →</a></div>
@@ -406,6 +427,209 @@
     });
   }
 
+  function renderTuner() {
+    stopTuner(false);
+    tunerTarget = 'auto';
+    tunerReferenceMidi = null;
+    breadcrumb.textContent = '琴弦调音器';
+    main.innerHTML = `<div class="page">
+      ${pageIntro('Tuner lab','琴弦调音器','拨响一根空弦，调音器会通过麦克风判断它偏高还是偏低。默认自动识别，也可以先指定琴弦，减少环境声音造成的误判。')}
+      <div class="tuner-layout section">
+        <section class="tuner-stage" id="tuner-stage" data-state="idle" aria-live="polite">
+          <div class="tuner-listening"><span class="tuner-mic-dot"></span><strong id="tuner-status">麦克风尚未开启</strong></div>
+          <div class="tuner-target-label" id="tuner-target-label">自动识别琴弦</div>
+          <div class="tuner-note"><strong id="tuner-note">—</strong><span id="tuner-octave"></span></div>
+          <div class="tuner-detected" id="tuner-detected">等待开始</div>
+          <div class="tuner-meter" aria-label="音高偏差表，左侧偏低，右侧偏高">
+            <div class="tuner-meter-track"><i id="tuner-needle"></i><b></b></div>
+            <div class="tuner-meter-labels"><span>−50</span><span>偏低</span><strong>准</strong><span>偏高</span><span>+50</span></div>
+          </div>
+          <div class="tuner-reading"><strong id="tuner-frequency">— Hz</strong><span id="tuner-cents">等待拨弦</span></div>
+          <h2 id="tuner-guidance">先开启麦克风，再拨响一根空弦</h2>
+          <div class="tuner-actions">
+            <button class="primary-button" id="tuner-toggle" type="button">◎ 开启麦克风</button>
+            <button class="secondary-button" id="tuner-reference" type="button" disabled>▶ 听目标音</button>
+          </div>
+        </section>
+
+        <aside class="tuner-side">
+          <section class="card tuner-string-card">
+            <div class="eyebrow">标准调弦 E A D G B E</div>
+            <h2>选择要调的琴弦</h2>
+            <p>环境较安静时用自动识别；周围有人说话或有音乐时，先点具体琴弦会更稳定。</p>
+            <div class="tuner-strings">
+              <button class="active tuner-auto" data-tuner-target="auto" type="button"><strong>自动</strong><span>识别琴弦</span></button>
+              ${standardTuning.map(item => `<button data-tuner-target="${item.midi}" type="button"><strong>${item.string} 弦</strong><span>${item.note}</span><small>${item.frequency.toFixed(2)} Hz</small></button>`).join('')}
+            </div>
+          </section>
+          <section class="card tuner-help-card">
+            <h3>怎样调得更准</h3>
+            <ol><li>把手机或 iPad 放在音孔前方约 20–40 厘米。</li><li>一次只拨一根空弦，等前一个声音停下再拨下一次。</li><li>显示“偏低”时慢慢拧紧；显示“偏高”时慢慢放松。</li><li>指针进入中间绿色区域并稳定两三次，就可以停下。</li></ol>
+            <div class="tuner-privacy"><span>●</span><div><strong>声音只在设备里分析</strong><small>网页不会录音、保存或上传。离开本页时麦克风会自动关闭。</small></div></div>
+          </section>
+        </aside>
+      </div>
+    </div>`;
+    bindTunerEvents();
+  }
+
+  function bindTunerEvents() {
+    document.getElementById('tuner-toggle').addEventListener('click', () => tunerStream ? stopTuner() : startTuner());
+    document.getElementById('tuner-reference').addEventListener('click', () => {
+      if (tunerReferenceMidi !== null) ui.playTone(tunerReferenceMidi, 1.1, .1);
+    });
+    document.querySelectorAll('[data-tuner-target]').forEach(button => button.addEventListener('click', () => {
+      tunerTarget = button.dataset.tunerTarget;
+      document.querySelectorAll('[data-tuner-target]').forEach(item => item.classList.toggle('active', item === button));
+      document.querySelectorAll('[data-tuner-target]').forEach(item => item.classList.remove('detected'));
+      const target = tunerTarget === 'auto' ? null : standardTuning.find(item => item.midi === Number(tunerTarget));
+      tunerReferenceMidi = target ? target.midi : null;
+      document.getElementById('tuner-reference').disabled = !target;
+      document.getElementById('tuner-target-label').textContent = target ? `${target.string} 弦目标音` : '自动识别琴弦';
+      document.getElementById('tuner-note').textContent = target ? target.note.slice(0, -1) : '—';
+      document.getElementById('tuner-octave').textContent = target ? target.note.slice(-1) : '';
+      document.getElementById('tuner-guidance').textContent = tunerStream ? `拨响 ${target ? `${target.string} 弦空弦` : '任意一根空弦'}` : '先开启麦克风，再拨响一根空弦';
+      tunerHistory = [];
+    }));
+  }
+
+  async function startTuner() {
+    const toggle = document.getElementById('tuner-toggle');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setTunerMessage('error', '当前打开方式不能使用麦克风', '请通过 HTTPS 网页链接，并使用 Safari、Chrome 或 Edge 打开。');
+      return;
+    }
+    if (rhythmTimer) {
+      pauseRhythm();
+      showToast('调音时已暂停背景节奏');
+    }
+    toggle.disabled = true;
+    toggle.textContent = '正在请求权限…';
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      tunerAudioContext = new AudioContextClass();
+      if (tunerAudioContext.state === 'suspended') await tunerAudioContext.resume();
+      tunerStream = await navigator.mediaDevices.getUserMedia({
+        video: false,
+        audio: { echoCancellation: { ideal: false }, noiseSuppression: { ideal: false }, autoGainControl: { ideal: false }, channelCount: { ideal: 1 } }
+      });
+      // 用户可能在权限提示期间离开调音页，此时立即释放刚取得的麦克风。
+      if (!toggle.isConnected || routeParts()[0] !== 'tuner') {
+        stopTuner(false);
+        return;
+      }
+      tunerSource = tunerAudioContext.createMediaStreamSource(tunerStream);
+      tunerAnalyser = tunerAudioContext.createAnalyser();
+      tunerAnalyser.fftSize = 4096;
+      tunerAnalyser.smoothingTimeConstant = 0;
+      tunerBuffer = new Float32Array(tunerAnalyser.fftSize);
+      tunerSource.connect(tunerAnalyser);
+      tunerHistory = [];
+      tunerMisses = 0;
+      toggle.disabled = false;
+      toggle.textContent = '■ 关闭麦克风';
+      setTunerMessage('listening', '麦克风已开启，正在听', `拨响 ${tunerTarget === 'auto' ? '任意一根空弦' : `${standardTuning.find(item => item.midi === Number(tunerTarget)).string} 弦空弦`}`);
+      tunerFrame = requestAnimationFrame(analyseTuner);
+    } catch (error) {
+      stopTuner(false);
+      toggle.disabled = false;
+      toggle.textContent = '◎ 重新开启麦克风';
+      const messages = {
+        NotAllowedError: ['没有获得麦克风权限', '请在浏览器的网站设置中允许麦克风，然后再试一次。'],
+        NotFoundError: ['没有找到可用的麦克风', '请检查设备麦克风，或连接一个音频输入设备。'],
+        NotReadableError: ['麦克风暂时无法使用', '它可能正被其他应用占用。关闭占用麦克风的应用后再试。'],
+        AbortError: ['麦克风启动失败', '请刷新页面，再重新开启麦克风。']
+      };
+      const message = messages[error.name] || ['无法开启麦克风', '请检查浏览器权限与系统麦克风设置后再试。'];
+      setTunerMessage('error', message[0], message[1]);
+    }
+  }
+
+  function analyseTuner(timestamp) {
+    if (!tunerAnalyser || !tunerAudioContext) return;
+    tunerFrame = requestAnimationFrame(analyseTuner);
+    if (timestamp - tunerLastAnalysis < 85) return;
+    tunerLastAnalysis = timestamp;
+    tunerAnalyser.getFloatTimeDomainData(tunerBuffer);
+    const pitch = ui.detectPitch(tunerBuffer, tunerAudioContext.sampleRate);
+    if (!pitch || pitch.clarity < .62) {
+      tunerMisses += 1;
+      if (tunerMisses > 5) showTunerWaiting();
+      return;
+    }
+    tunerMisses = 0;
+    tunerHistory.push(pitch.frequency);
+    if (tunerHistory.length > 5) tunerHistory.shift();
+    const sorted = [...tunerHistory].sort((a, b) => a - b);
+    updateTunerReading(sorted[Math.floor(sorted.length / 2)]);
+  }
+
+  function updateTunerReading(frequency) {
+    const detectedMidi = 69 + 12 * Math.log2(frequency / 440);
+    const roundedMidi = Math.round(detectedMidi);
+    const detectedName = `${ui.noteFromMidi(roundedMidi)}${Math.floor(roundedMidi / 12) - 1}`;
+    const target = tunerTarget === 'auto'
+      ? standardTuning.reduce((best, item) => Math.abs(1200 * Math.log2(frequency / item.frequency)) < Math.abs(1200 * Math.log2(frequency / best.frequency)) ? item : best)
+      : standardTuning.find(item => item.midi === Number(tunerTarget));
+    const cents = 1200 * Math.log2(frequency / target.frequency);
+    const absoluteCents = Math.abs(cents);
+    const state = absoluteCents <= 5 ? 'tuned' : cents < 0 ? 'flat' : 'sharp';
+    const guidance = absoluteCents <= 5 ? '准了，保持这个位置' : cents < 0 ? '偏低：慢慢拧紧一点' : '偏高：慢慢放松一点';
+    tunerReferenceMidi = target.midi;
+    document.getElementById('tuner-stage').dataset.state = state;
+    document.getElementById('tuner-status').textContent = '正在实时收音';
+    document.getElementById('tuner-target-label').textContent = `${target.string} 弦目标音`;
+    document.getElementById('tuner-note').textContent = target.note.slice(0, -1);
+    document.getElementById('tuner-octave').textContent = target.note.slice(-1);
+    document.getElementById('tuner-detected').textContent = `检测到 ${detectedName}`;
+    document.getElementById('tuner-frequency').textContent = `${frequency.toFixed(1)} Hz`;
+    document.getElementById('tuner-cents').textContent = `${cents > 0 ? '+' : ''}${Math.round(cents)} 音分`;
+    document.getElementById('tuner-guidance').textContent = guidance;
+    document.getElementById('tuner-needle').style.transform = `translateX(-50%) rotate(${Math.max(-50, Math.min(50, cents)) * .9}deg)`;
+    document.getElementById('tuner-reference').disabled = false;
+    document.querySelectorAll('[data-tuner-target]').forEach(button => button.classList.toggle('detected', tunerTarget === 'auto' && Number(button.dataset.tunerTarget) === target.midi));
+  }
+
+  function showTunerWaiting() {
+    if (!tunerStream) return;
+    document.getElementById('tuner-stage').dataset.state = 'listening';
+    document.getElementById('tuner-status').textContent = '麦克风已开启，正在听';
+    document.getElementById('tuner-detected').textContent = '还没有听到稳定的琴弦声';
+    document.getElementById('tuner-frequency').textContent = '— Hz';
+    document.getElementById('tuner-cents').textContent = '请再拨一次';
+    document.getElementById('tuner-guidance').textContent = '一次只拨一根空弦，并让它持续发声';
+    document.getElementById('tuner-needle').style.transform = 'translateX(-50%) rotate(0deg)';
+  }
+
+  function setTunerMessage(state, status, guidance) {
+    const stage = document.getElementById('tuner-stage');
+    if (!stage) return;
+    stage.dataset.state = state;
+    document.getElementById('tuner-status').textContent = status;
+    document.getElementById('tuner-guidance').textContent = guidance;
+  }
+
+  function stopTuner(updateInterface = true) {
+    if (tunerFrame) cancelAnimationFrame(tunerFrame);
+    tunerFrame = null;
+    if (tunerSource) tunerSource.disconnect();
+    if (tunerStream) tunerStream.getTracks().forEach(track => track.stop());
+    if (tunerAudioContext && tunerAudioContext.state !== 'closed') tunerAudioContext.close().catch(() => {});
+    tunerStream = null;
+    tunerSource = null;
+    tunerAnalyser = null;
+    tunerAudioContext = null;
+    tunerBuffer = null;
+    tunerHistory = [];
+    tunerMisses = 0;
+    if (!updateInterface || !document.getElementById('tuner-stage')) return;
+    document.getElementById('tuner-stage').dataset.state = 'idle';
+    document.getElementById('tuner-status').textContent = '麦克风已关闭';
+    document.getElementById('tuner-toggle').textContent = '◎ 开启麦克风';
+    document.getElementById('tuner-guidance').textContent = '需要时可以重新开启';
+    document.getElementById('tuner-detected').textContent = '未在收音';
+  }
+
   const rhythmPatterns = {
     quarter: {label:'四分音符', marks:['↓','·','↓','·','↓','·','↓','·']},
     eighth: {label:'八分音符', marks:['↓','↑','↓','↑','↓','↑','↓','↑']},
@@ -640,9 +864,10 @@
 
   function navigate() {
     const [route,param] = routeParts();
+    if (route !== 'tuner') stopTuner(false);
     document.body.classList.remove('nav-open');
     setActiveNav(route==='lesson'?'course':route);
-    ({home:renderHome,course:renderCourse,lesson:()=>renderLesson(param),fretboard:renderFretboard,chords:renderChords,rhythm:renderRhythm,map:renderMap,practice:()=>renderPractice(),glossary:renderGlossary}[route] || renderNotFound)();
+    ({home:renderHome,course:renderCourse,lesson:()=>renderLesson(param),fretboard:renderFretboard,chords:renderChords,rhythm:renderRhythm,tuner:renderTuner,map:renderMap,practice:()=>renderPractice(),glossary:renderGlossary}[route] || renderNotFound)();
     window.scrollTo(0,0);
   }
 
@@ -652,7 +877,7 @@
   document.getElementById('focus-button').addEventListener('click',()=>{document.body.classList.toggle('focus-mode');showToast(document.body.classList.contains('focus-mode')?'已进入专注阅读，按 Esc 退出':'已退出专注阅读');});
   document.addEventListener('keydown',event=>{if(event.key==='Escape'){document.body.classList.remove('focus-mode','nav-open');}});
   window.addEventListener('hashchange',navigate);
-  window.addEventListener('beforeunload',stopRhythm);
+  window.addEventListener('beforeunload',()=>{stopRhythm();stopTuner(false);});
   initRhythmPlayer();
   navigate();
 })();

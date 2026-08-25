@@ -123,7 +123,7 @@ h3 { margin-bottom: 9px; font-size: 16px; }
 .home-lab-section { padding: 38px; border-radius: 24px; background: var(--green); color: white; }
 .home-lab-section .eyebrow { color: #e4b66f; }
 .home-lab-section .home-section-heading > p { color: #b9cec4; }
-.home-lab-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.home-lab-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .home-lab-card { display: grid; grid-template-columns: 38px 1fr auto; gap: 14px; min-height: 180px; padding: 22px; border: 1px solid rgba(255,255,255,.14); border-radius: 16px; background: rgba(255,255,255,.075); transition: background .18s ease, transform .18s ease; }
 .home-lab-card:hover { background: rgba(255,255,255,.13); transform: translateY(-2px); }
 .home-lab-number { color: #e6b86f; font-family: Georgia, serif; font-size: 13px; }
@@ -297,6 +297,56 @@ select, input[type="number"] { min-height: 42px; padding: 8px 34px 8px 11px; bor
 .ear-note-buttons span { font-weight: 800; }
 .ear-note-buttons small { margin-top: 2px; color: var(--muted); font-size: 9px; }
 
+.tuner-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(310px, .8fr); gap: 22px; align-items: start; }
+.tuner-stage { --tuner-accent: #f1bd68; min-height: 650px; padding: 30px; overflow: hidden; color: white; border-radius: 22px; background: #173f31; box-shadow: 0 24px 60px rgba(10,25,19,.18); text-align: center; }
+.tuner-stage[data-state="tuned"] { --tuner-accent: #82c7a7; }
+.tuner-stage[data-state="flat"], .tuner-stage[data-state="sharp"] { --tuner-accent: #f1bd68; }
+.tuner-stage[data-state="error"] { --tuner-accent: #dc8d83; }
+.tuner-listening { display: inline-flex; gap: 8px; align-items: center; min-height: 31px; padding: 7px 12px; color: #c0d2ca; border: 1px solid rgba(255,255,255,.12); border-radius: 99px; background: rgba(255,255,255,.06); font-size: 11px; }
+.tuner-mic-dot { width: 8px; height: 8px; border-radius: 50%; background: #829b90; }
+.tuner-stage[data-state="listening"] .tuner-mic-dot, .tuner-stage[data-state="flat"] .tuner-mic-dot, .tuner-stage[data-state="sharp"] .tuner-mic-dot, .tuner-stage[data-state="tuned"] .tuner-mic-dot { background: var(--tuner-accent); box-shadow: 0 0 0 5px color-mix(in srgb, var(--tuner-accent) 18%, transparent); animation: rhythm-pulse 1.2s ease-in-out infinite; }
+.tuner-target-label { margin-top: 30px; color: #9fb9ad; font-size: 11px; font-weight: 800; letter-spacing: .08em; }
+.tuner-note { display: flex; justify-content: center; align-items: start; min-height: 120px; margin-top: 2px; font-family: Georgia, "Songti SC", serif; line-height: 1; }
+.tuner-note strong { font-size: 116px; font-weight: 500; }
+.tuner-note span { margin-top: 18px; color: #aec3b9; font-size: 26px; }
+.tuner-detected { min-height: 22px; color: #c3d4cc; font-size: 12px; }
+.tuner-meter { width: min(100%, 520px); margin: 20px auto 0; }
+.tuner-meter-track { position: relative; height: 105px; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,.22); border-radius: 105px 105px 0 0; background: radial-gradient(circle at 50% 100%, rgba(255,255,255,.05) 0 29%, transparent 30%), repeating-conic-gradient(from 225deg at 50% 100%, rgba(255,255,255,.24) 0 .4deg, transparent .4deg 11.25deg); }
+.tuner-meter-track::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 46px; height: 78px; transform: translateX(-50%); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--tuner-accent) 20%, transparent), transparent); }
+.tuner-meter-track i { position: absolute; z-index: 2; left: 50%; bottom: 6px; width: 3px; height: 88px; border-radius: 3px; background: var(--tuner-accent); box-shadow: 0 0 16px color-mix(in srgb, var(--tuner-accent) 55%, transparent); transform: translateX(-50%) rotate(0deg); transform-origin: 50% calc(100% - 2px); transition: transform .12s ease-out, background .2s ease; }
+.tuner-meter-track b { position: absolute; z-index: 3; left: 50%; bottom: 0; width: 15px; height: 15px; border-radius: 50%; background: var(--tuner-accent); transform: translate(-50%, 50%); }
+.tuner-meter-labels { display: grid; grid-template-columns: 1fr 1fr 44px 1fr 1fr; gap: 5px; align-items: center; margin-top: 9px; color: #8da99c; font-size: 9px; }
+.tuner-meter-labels strong { color: var(--tuner-accent); font-size: 10px; }
+.tuner-reading { display: flex; justify-content: center; gap: 17px; margin-top: 20px; color: #a8c1b5; font-size: 12px; }
+.tuner-reading strong { color: white; }
+.tuner-stage h2 { min-height: 32px; margin: 16px 0 0; color: var(--tuner-accent); font-family: Georgia, "Songti SC", serif; font-size: 21px; }
+.tuner-actions { display: flex; justify-content: center; gap: 10px; margin-top: 22px; }
+.tuner-actions button { min-width: 150px; }
+.tuner-stage .primary-button { color: #173f31; background: var(--tuner-accent); }
+.tuner-stage .secondary-button { color: white; border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.07); }
+.tuner-stage .secondary-button:disabled { opacity: .38; cursor: default; }
+.tuner-side { display: grid; gap: 16px; }
+.tuner-string-card h2 { margin: 9px 0 7px; font-size: 23px; }
+.tuner-string-card > p { color: var(--muted); font-size: 12px; }
+.tuner-strings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 18px; }
+.tuner-strings button { position: relative; min-height: 74px; padding: 10px 6px; color: var(--ink); border: 1px solid var(--line); border-radius: 11px; background: var(--paper); cursor: pointer; }
+.tuner-strings button:hover { border-color: var(--green-2); }
+.tuner-strings button.active { color: white; border-color: var(--green); background: var(--green); }
+.tuner-strings button.detected:not(.active) { border-color: #dca958; box-shadow: inset 0 0 0 2px #f1bd68; }
+.tuner-strings strong, .tuner-strings span, .tuner-strings small { display: block; }
+.tuner-strings strong { font-size: 11px; }
+.tuner-strings span { margin-top: 3px; font-family: Georgia, serif; font-size: 19px; }
+.tuner-strings small { margin-top: 2px; color: var(--muted); font-size: 8px; }
+.tuner-strings button.active small { color: #c7d8d0; }
+.tuner-strings .tuner-auto { grid-column: 1 / -1; min-height: 58px; }
+.tuner-strings .tuner-auto strong, .tuner-strings .tuner-auto span { display: inline; margin: 0 4px; font-family: inherit; font-size: 12px; }
+.tuner-help-card ol { margin-bottom: 20px; padding-left: 19px; color: var(--muted); font-size: 12px; }
+.tuner-help-card li + li { margin-top: 7px; }
+.tuner-privacy { display: flex; gap: 10px; align-items: start; padding: 13px; color: var(--green); border-radius: 11px; background: var(--green-soft); }
+.tuner-privacy > span { margin-top: 2px; font-size: 8px; }
+.tuner-privacy strong, .tuner-privacy small { display: block; }
+.tuner-privacy small { margin-top: 3px; color: var(--muted); line-height: 1.5; }
+
 .rhythm-stage { padding: 30px; color: white; background: var(--green); border-radius: 20px; }
 .rhythm-background-note { display: flex; gap: 13px; align-items: center; margin: 24px 0 16px; padding: 14px 17px; color: var(--green); border: 1px solid rgba(30,91,69,.18); border-radius: 13px; background: var(--green-soft); }
 .rhythm-background-note > span { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 auto; color: white; background: var(--green); border-radius: 50%; font-size: 19px; }
@@ -409,6 +459,8 @@ body.focus-mode .page.narrow { width: min(760px, calc(100% - 40px)); padding-top
   .home-route-callout { grid-template-columns: 1fr; }
   .home-route-callout > a { grid-column: auto; }
   .course-layout, .chord-layout, .chord-display { grid-template-columns: 1fr; }
+  .tuner-layout { grid-template-columns: 1fr; }
+  .tuner-side { grid-template-columns: 1fr 1fr; }
   .available-course-grid { grid-template-columns: 1fr; }
   .available-lesson-card:nth-child(odd):last-child { grid-column: auto; }
   .stage-detail { position: static; }
@@ -467,6 +519,12 @@ body.focus-mode .page.narrow { width: min(760px, calc(100% - 40px)); padding-top
   .ear-demo-group-head { align-items: stretch; flex-direction: column; }
   .ear-demo-group-head button { width: 100%; }
   .ear-note-buttons { display: grid; grid-template-columns: 1fr 1fr; }
+  .tuner-stage { min-height: 590px; padding: 25px 16px; }
+  .tuner-note strong { font-size: 96px; }
+  .tuner-actions { align-items: stretch; flex-direction: column; }
+  .tuner-actions button { width: 100%; }
+  .tuner-side { grid-template-columns: 1fr; }
+  .tuner-meter-labels { grid-template-columns: 1fr 1fr 34px 1fr 1fr; }
   .fact-grid, .stage-test-grid { grid-template-columns: 1fr; }
   .beat-grid, .strum-pattern { gap: 3px; }
   .beat { padding: 10px 1px; }
