@@ -472,6 +472,72 @@
     </svg>`;
   }
 
+  // 第八阶段用台阶长短与重点升音呈现音阶结构，让升降号有可追溯的原因。
+  function scaleTheoryDiagram(type) {
+    const scaleColor = '#9a6a2f';
+    const naturalColor = '#2f7771';
+    const sharpColor = '#c87337';
+    const mutedColor = '#68736c';
+    const drawScale = (notes, steps, y, changed = []) => notes.map((note,index) => {
+      const x = 56 + index * 93;
+      const raised = changed.includes(index);
+      return `<g><rect x="${x-29}" y="${y-(index*12)}" width="58" height="54" rx="11" fill="${raised?'#f6d9be':(index===0||index===7?'#eadbc8':'#fffef9')}" stroke="${raised?sharpColor:'#d8c8b3'}"/><text x="${x}" y="${y+32-(index*12)}" text-anchor="middle" fill="${raised?sharpColor:scaleColor}" font-size="16" font-weight="800">${note}</text>${index<7?`<g><path d="M${x+30} ${y+22-(index*12)} H${x+63}" stroke="${steps[index]==='半'?sharpColor:'#c8ad86'}" stroke-width="2"/><text x="${x+46}" y="${y+13-(index*12)}" text-anchor="middle" fill="${steps[index]==='半'?sharpColor:mutedColor}" font-size="8" font-weight="800">${steps[index]}</text></g>`:''}</g>`;
+    }).join('');
+    if (type === 'scale-stair-listen') {
+      const notes = ['C','D','E','F','G','A','B','C'];
+      return `<svg viewBox="0 0 760 300" role="img" aria-label="C 大调七级台阶上行图">
+        <text x="380" y="28" text-anchor="middle" fill="${scaleColor}" font-size="16" font-weight="800">七个不同音，走向高八度的同名主音</text>
+        ${drawScale(notes,['全','全','半','全','全','全','半'],202)}
+        <text x="380" y="278" text-anchor="middle" fill="${mutedColor}" font-size="12">听见向上、向下与回到 C，再给每一级命名</text>
+      </svg>`;
+    }
+    if (type === 'c-major-natural') {
+      const notes = ['C','D','E','F','G','A','B','C'];
+      return `<svg viewBox="0 0 760 290" role="img" aria-label="C 大调自然音与两处半音图">
+        <text x="380" y="29" text-anchor="middle" fill="${scaleColor}" font-size="16" font-weight="800">C 大调只用自然音，但自然音间距并不平均</text>
+        ${notes.map((note,index)=>{const x=56+index*93;const isHalfAfter=index===2||index===6;return `<g><circle cx="${x}" cy="124" r="25" fill="${index===0||index===7?scaleColor:naturalColor}"/><text x="${x}" y="130" text-anchor="middle" fill="white" font-size="17" font-weight="800">${note}</text>${index<7?`<g><line x1="${x+27}" y1="124" x2="${x+65}" y2="124" stroke="${isHalfAfter?sharpColor:'#b8c8c0'}" stroke-width="${isHalfAfter?5:2}"/><text x="${x+46}" y="106" text-anchor="middle" fill="${isHalfAfter?sharpColor:mutedColor}" font-size="9" font-weight="800">${isHalfAfter?'半音':'全音'}</text></g>`:''}</g>`;}).join('')}
+        <rect x="215" y="187" width="145" height="48" rx="12" fill="#fff0df" stroke="#d79a64"/><text x="287" y="208" text-anchor="middle" fill="${sharpColor}" font-size="12" font-weight="800">E → F</text><text x="287" y="225" text-anchor="middle" fill="${mutedColor}" font-size="9">相邻一品</text>
+        <rect x="494" y="187" width="145" height="48" rx="12" fill="#fff0df" stroke="#d79a64"/><text x="566" y="208" text-anchor="middle" fill="${sharpColor}" font-size="12" font-weight="800">B → C</text><text x="566" y="225" text-anchor="middle" fill="${mutedColor}" font-size="9">相邻一品</text>
+        <text x="380" y="270" text-anchor="middle" fill="${mutedColor}" font-size="11">2+2+1+2+2+2+1 = 12 个半音</text>
+      </svg>`;
+    }
+    if (type === 'major-step-formula') {
+      const steps = [['全','2'],['全','2'],['半','1'],['全','2'],['全','2'],['全','2'],['半','1']];
+      return `<svg viewBox="0 0 760 280" role="img" aria-label="大调全全半全全全半结构图">
+        <text x="380" y="30" text-anchor="middle" fill="${scaleColor}" font-size="16" font-weight="800">大调的身份证：距离顺序不随主音改变</text>
+        ${steps.map((step,index)=>{const x=44+index*101;const isHalf=step[0]==='半';return `<g><rect x="${x}" y="76" width="82" height="92" rx="15" fill="${isHalf?'#f6d9cf':'#f2e7d6'}" stroke="${isHalf?sharpColor:'#cbae83'}"/><text x="${x+41}" y="115" text-anchor="middle" fill="${isHalf?sharpColor:scaleColor}" font-size="23" font-weight="800">${step[0]}</text><text x="${x+41}" y="142" text-anchor="middle" fill="${mutedColor}" font-size="10">${step[1]} 个半音</text><text x="${x+41}" y="190" text-anchor="middle" fill="${mutedColor}" font-size="9">${index+1}→${index+2} 级</text></g>`;}).join('')}
+        <text x="380" y="231" text-anchor="middle" fill="${naturalColor}" font-size="13" font-weight="800">累计落点：0 · 2 · 4 · 5 · 7 · 9 · 11 · 12</text>
+        <text x="380" y="258" text-anchor="middle" fill="${mutedColor}" font-size="11">吉他同弦对应：2 · 2 · 1 · 2 · 2 · 2 · 1 品</text>
+      </svg>`;
+    }
+    if (type === 'c-major-fretboard') {
+      const points = [{s:5,f:3,n:'C'},{s:4,f:0,n:'D'},{s:4,f:2,n:'E'},{s:4,f:3,n:'F'},{s:3,f:0,n:'G'},{s:3,f:2,n:'A'},{s:2,f:0,n:'B'},{s:2,f:1,n:'C'}];
+      return `<svg viewBox="0 0 760 320" role="img" aria-label="C 大调开放把位指板路线图">
+        <text x="380" y="29" text-anchor="middle" fill="${scaleColor}" font-size="16" font-weight="800">同一条音阶折叠到多根弦：品数重来，音高继续向上</text>
+        <rect x="105" y="58" width="575" height="190" rx="14" fill="#9a663d"/>
+        ${[5,4,3,2].map((stringNumber,index)=>{const y=86+index*49;return `<g><text x="84" y="${y+5}" text-anchor="end" fill="${mutedColor}" font-size="11">${stringNumber}弦</text><line x1="105" y1="${y}" x2="680" y2="${y}" stroke="#f0e2cc" stroke-width="${3-index*.45}"/></g>`;}).join('')}
+        ${[0,1,2,3].map((fret,index)=>{const x=148+index*155;return `<g><line x1="${x+70}" y1="58" x2="${x+70}" y2="248" stroke="#ead9bd" stroke-width="${index===0?6:3}"/><text x="${x}" y="270" text-anchor="middle" fill="${mutedColor}" font-size="10">${fret===0?'空弦':`${fret}品`}</text></g>`;}).join('')}
+        ${points.map((point,index)=>{const x=148+point.f*155;const y=86+(5-point.s)*49;return `<g><circle cx="${x}" cy="${y}" r="16" fill="${point.n==='C'?scaleColor:naturalColor}" stroke="white" stroke-width="2"/><text x="${x}" y="${y+5}" text-anchor="middle" fill="white" font-size="11" font-weight="800">${point.n}</text><text x="${x}" y="${y-22}" text-anchor="middle" fill="#fff4df" font-size="8">${index+1}</text></g>`;}).join('')}
+        <text x="380" y="300" text-anchor="middle" fill="${mutedColor}" font-size="11">5弦3品 C → 2弦1品 C：音名与级数保持连续</text>
+      </svg>`;
+    }
+    if (type === 'g-major-derive') {
+      const notes = ['G','A','B','C','D','E','F#','G'];
+      return `<svg viewBox="0 0 760 310" role="img" aria-label="G 大调把 F 修正为 F 升图">
+        <text x="380" y="28" text-anchor="middle" fill="${scaleColor}" font-size="16" font-weight="800">检查最后三音：E → F# → G 才是“全 → 半”</text>
+        ${drawScale(notes,['全','全','半','全','全','全','半'],206,[6])}
+        <path d="M614 241 C614 279 570 279 570 244" fill="none" stroke="${sharpColor}" stroke-width="2"/><text x="592" y="292" text-anchor="middle" fill="${sharpColor}" font-size="10" font-weight="800">F 向上移动一品</text>
+      </svg>`;
+    }
+    const notes = ['D','E','F#','G','A','B','C#','D'];
+    return `<svg viewBox="0 0 760 320" role="img" aria-label="D 大调 F 升与 C 升推导图">
+      <text x="380" y="28" text-anchor="middle" fill="${scaleColor}" font-size="16" font-weight="800">D 大调的两个升号，都在修正结构</text>
+      ${drawScale(notes,['全','全','半','全','全','全','半'],208,[2,6])}
+      <rect x="176" y="253" width="170" height="43" rx="11" fill="#fff0df" stroke="#d79a64"/><text x="261" y="271" text-anchor="middle" fill="${sharpColor}" font-size="10" font-weight="800">E → F# = 全音</text><text x="261" y="287" text-anchor="middle" fill="${mutedColor}" font-size="8">F# → G = 半音</text>
+      <rect x="452" y="253" width="170" height="43" rx="11" fill="#fff0df" stroke="#d79a64"/><text x="537" y="271" text-anchor="middle" fill="${sharpColor}" font-size="10" font-weight="800">B → C# = 全音</text><text x="537" y="287" text-anchor="middle" fill="${mutedColor}" font-size="8">C# → D = 半音</text>
+    </svg>`;
+  }
+
   function renderLessonDiagram(type) {
     const fixed = {'guitar-anatomy': anatomyDiagram, 'posture': postureDiagram, 'fret-pressure': pressureDiagram, 'pick-motion': pickDiagram, 'spider-grid': spiderDiagram, 'chord-reading': chordReadingDiagram};
     if (fixed[type]) return fixed[type]();
@@ -482,6 +548,7 @@
     if (['pitch-vibration','note-dual-names','chromatic-wheel','semitone-whole','natural-neighbors','solfege-systems'].includes(type)) return pitchLessonDiagram(type);
     if (['tuning-strings','sixth-string-cycle','fifth-string-cycle','fret-semitone-grid','same-note-positions','fret-hunt-test'].includes(type)) return fretboardTheoryDiagram(type);
     if (['interval-listen-first','interval-degrees','thirds-compare','fourth-fifth','interval-shapes','interval-ear-check'].includes(type)) return intervalTheoryDiagram(type);
+    if (['scale-stair-listen','c-major-natural','major-step-formula','c-major-fretboard','g-major-derive','d-major-derive'].includes(type)) return scaleTheoryDiagram(type);
     return anatomyDiagram();
   }
 

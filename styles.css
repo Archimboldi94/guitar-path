@@ -122,6 +122,7 @@ h3 { margin-bottom: 9px; font-size: 16px; }
 .stage-tone-5 { --stage-color: #77558c; --stage-soft: #eee6f3; }
 .stage-tone-6 { --stage-color: #2f7771; --stage-soft: #dfeeed; }
 .stage-tone-7 { --stage-color: #965568; --stage-soft: #f2e4e8; }
+.stage-tone-8 { --stage-color: #9a6a2f; --stage-soft: #f4eadb; }
 .home-lab-section { padding: 38px; border-radius: 24px; background: var(--green); color: white; }
 .home-lab-section .eyebrow { color: #e4b66f; }
 .home-lab-section .home-section-heading > p { color: #b9cec4; }
@@ -332,6 +333,30 @@ select, input[type="number"] { min-height: 42px; padding: 8px 34px 8px 11px; bor
 .interval-step-track i { display: grid; place-items: center; min-height: 20px; color: #7a4857; border-radius: 5px; background: #ead5dc; font-size: 8px; font-style: normal; }
 .interval-step-track i.same { background: #e1ece7; color: #30624d; }
 .interval-pair-card small { color: var(--muted); font-size: 10px; }
+
+.scale-demo-section > .muted { margin: -8px 0 18px; font-size: 13px; }
+.scale-run-grid { display: grid; gap: 14px; }
+.scale-run-card { padding: 20px; overflow: hidden; border: 1px solid rgba(154,106,47,.24); border-radius: 16px; background: #fbf6ed; }
+.scale-run-head { display: flex; justify-content: space-between; gap: 18px; align-items: center; }
+.scale-run-head > div:last-child { display: flex; flex-wrap: wrap; justify-content: end; gap: 7px; }
+.scale-run-head span { color: #9a6a2f; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.scale-run-head h3 { margin: 3px 0 0; color: #754d20; font-family: Georgia, "Songti SC", serif; font-size: 23px; }
+.scale-note-path { display: flex; width: 100%; min-width: 0; margin-top: 20px; overflow-x: auto; padding: 3px 3px 10px; }
+.scale-note-step { display: flex; flex: 0 0 92px; align-items: center; }
+.scale-note-step > button { display: grid; place-items: center; width: 58px; height: 66px; flex: 0 0 58px; color: var(--ink); border: 1px solid rgba(154,106,47,.22); border-radius: 13px; background: white; cursor: pointer; transition: transform .13s ease, background .13s ease, border-color .13s ease; }
+.scale-note-step > button:hover, .scale-note-step > button.playing { transform: translateY(-3px); color: white; border-color: #9a6a2f; background: #9a6a2f; }
+.scale-note-step > button b, .scale-note-step > button small { display: block; }
+.scale-note-step > button b { font-size: 19px; }
+.scale-note-step > button small { margin-top: 2px; color: var(--muted); font-size: 8px; }
+.scale-note-step > button.playing small, .scale-note-step > button:hover small { color: #f5e5cb; }
+.scale-note-step.changed > button { color: #8c4f25; border-color: #d49359; background: #fff0dd; box-shadow: inset 0 -3px 0 #d49359; }
+.scale-note-step.changed > button.playing { color: white; background: #c87337; }
+.scale-gap { position: relative; display: grid; place-items: center; width: 34px; flex: 0 0 34px; }
+.scale-gap i { width: 100%; height: 2px; background: #d5b88f; }
+.scale-gap em { position: absolute; padding: 2px 5px; color: #75542d; border-radius: 8px; background: #f1dfc3; font-size: 8px; font-style: normal; font-weight: 800; }
+.scale-gap.half i { background: #b06f5c; }
+.scale-gap.half em { color: white; background: #b06f5c; }
+.scale-run-note { margin: 9px 0 0; color: var(--muted); font-size: 11px; }
 
 .tuner-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(310px, .8fr); gap: 22px; align-items: start; }
 .tuner-stage { --tuner-accent: #f1bd68; min-height: 650px; padding: 30px; overflow: hidden; color: white; border-radius: 22px; background: #173f31; box-shadow: 0 24px 60px rgba(10,25,19,.18); text-align: center; }
@@ -557,6 +582,9 @@ body.focus-mode .page.narrow { width: min(760px, calc(100% - 40px)); padding-top
   .ear-note-buttons { display: grid; grid-template-columns: 1fr 1fr; }
   .fretboard-demo-heading { align-items: stretch; flex-direction: column; }
   .fretboard-demo-heading button { width: 100%; }
+  .scale-run-head { align-items: stretch; flex-direction: column; }
+  .scale-run-head > div:last-child { justify-content: stretch; }
+  .scale-run-head button { flex: 1; }
   .lesson-fretboard { padding: 10px; }
   .tuner-stage { min-height: 590px; padding: 25px 16px; }
   .tuner-note strong { font-size: 96px; }
