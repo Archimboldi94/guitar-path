@@ -103,6 +103,7 @@ h3 { margin-bottom: 9px; font-size: 16px; }
 .home-section-heading > a { flex: 0 0 auto; color: var(--green); font-size: 13px; font-weight: 750; }
 .home-section-heading > p { max-width: 350px; color: var(--muted); font-size: 13px; text-align: right; }
 .home-stage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.home-stage-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .home-stage-card { position: relative; min-height: 232px; padding: 26px; overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
 .home-stage-card::after { content: ""; position: absolute; right: -32px; top: -35px; width: 112px; height: 112px; border: 24px solid var(--stage-soft); border-radius: 50%; opacity: .72; }
 .home-stage-card:hover { transform: translateY(-3px); border-color: #b3b9b4; box-shadow: 0 16px 35px rgba(24,34,29,.07); }
@@ -118,6 +119,7 @@ h3 { margin-bottom: 9px; font-size: 16px; }
 .stage-tone-2 { --stage-color: #a35f20; --stage-soft: #f7ead9; }
 .stage-tone-3 { --stage-color: #8b4a48; --stage-soft: #f1e2df; }
 .stage-tone-4 { --stage-color: #435f87; --stage-soft: #e4eaf2; }
+.stage-tone-5 { --stage-color: #77558c; --stage-soft: #eee6f3; }
 .home-lab-section { padding: 38px; border-radius: 24px; background: var(--green); color: white; }
 .home-lab-section .eyebrow { color: #e4b66f; }
 .home-lab-section .home-section-heading > p { color: #b9cec4; }
@@ -282,6 +284,18 @@ select, input[type="number"] { min-height: 42px; padding: 8px 34px 8px 11px; bor
 .tab-notation { margin: 0; padding: 11px 13px; overflow-x: auto; color: #253a30; background: rgba(255,255,255,.7); border-radius: 9px; font-family: Consolas, "SFMono-Regular", monospace; font-size: 14px; font-weight: 700; white-space: nowrap; }
 .tab-demo-button { min-width: 142px; }
 .tab-demo-button:disabled { opacity: .72; cursor: wait; }
+.ear-demo-card { display: grid; gap: 16px; padding: 22px; border: 1px solid rgba(119,85,140,.2); border-radius: 16px; background: #f4eef7; }
+.ear-demo-card > div > h3 { margin-bottom: 6px; color: #68477e; font-family: Georgia, "Songti SC", serif; font-size: 21px; }
+.ear-demo-card > div > p { margin-bottom: 0; color: var(--muted); font-size: 13px; }
+.ear-demo-group { padding: 16px; border: 1px solid rgba(119,85,140,.16); border-radius: 13px; background: rgba(255,255,255,.7); }
+.ear-demo-group-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 12px; }
+.ear-demo-group-head strong { color: #68477e; font-size: 13px; }
+.ear-note-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.ear-note-buttons button { min-width: 84px; padding: 10px 12px; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; background: var(--surface); cursor: pointer; transition: transform .13s ease, border-color .13s ease, background .13s ease; }
+.ear-note-buttons button:hover, .ear-note-buttons button.playing { transform: translateY(-2px); border-color: #8b64a3; background: #eee2f4; }
+.ear-note-buttons span, .ear-note-buttons small { display: block; }
+.ear-note-buttons span { font-weight: 800; }
+.ear-note-buttons small { margin-top: 2px; color: var(--muted); font-size: 9px; }
 
 .rhythm-stage { padding: 30px; color: white; background: var(--green); border-radius: 20px; }
 .rhythm-background-note { display: flex; gap: 13px; align-items: center; margin: 24px 0 16px; padding: 14px 17px; color: var(--green); border: 1px solid rgba(30,91,69,.18); border-radius: 13px; background: var(--green-soft); }
@@ -421,6 +435,7 @@ body.focus-mode .page.narrow { width: min(760px, calc(100% - 40px)); padding-top
   .home-section-heading { align-items: start; flex-direction: column; gap: 10px; }
   .home-section-heading > p { text-align: left; }
   .home-stage-grid { grid-template-columns: 1fr; }
+  .home-stage-card:last-child:nth-child(odd) { grid-column: auto; }
   .home-stage-card { min-height: 218px; padding: 22px; }
   .home-stage-meta { left: 22px; right: 22px; }
   .home-lab-section { padding: 27px 20px; border-radius: 18px; }
@@ -449,6 +464,9 @@ body.focus-mode .page.narrow { width: min(760px, calc(100% - 40px)); padding-top
   .lesson-chord-grid { grid-template-columns: 1fr; }
   .tab-demo-card { grid-template-columns: 1fr; }
   .tab-demo-button { width: 100%; }
+  .ear-demo-group-head { align-items: stretch; flex-direction: column; }
+  .ear-demo-group-head button { width: 100%; }
+  .ear-note-buttons { display: grid; grid-template-columns: 1fr 1fr; }
   .fact-grid, .stage-test-grid { grid-template-columns: 1fr; }
   .beat-grid, .strum-pattern { gap: 3px; }
   .beat { padding: 10px 1px; }

@@ -253,6 +253,60 @@
     </svg>`;
   }
 
+  // 第五阶段用同一套紫色视觉区分“固定音高”和“相对位置”两类坐标。
+  function pitchLessonDiagram(type) {
+    if (type === 'pitch-vibration') {
+      const wave = (y,cycles) => Array.from({length:121},(_,i)=>`${i?'L':'M'} ${70+i*5.2} ${y+Math.sin(i/120*Math.PI*2*cycles)*28}`).join(' ');
+      return `<svg viewBox="0 0 760 285" role="img" aria-label="振动快慢与音高关系图">
+        <text x="65" y="32" fill="#405048" font-size="14" font-weight="800">振动较慢 · 听起来较低</text><path d="${wave(86,3)}" fill="none" stroke="#1e5b45" stroke-width="5" stroke-linecap="round"/>
+        <text x="65" y="157" fill="#405048" font-size="14" font-weight="800">振动较快 · 听起来较高</text><path d="${wave(214,8)}" fill="none" stroke="#77558c" stroke-width="5" stroke-linecap="round"/>
+        <text x="380" y="276" text-anchor="middle" fill="#68736c" font-size="12">同样时间里往返次数更多，音高通常更高</text>
+      </svg>`;
+    }
+    if (type === 'note-dual-names') {
+      const names=[['C','Do'],['D','Re'],['E','Mi'],['F','Fa'],['G','Sol'],['A','La'],['B','Si']];
+      return `<svg viewBox="0 0 760 285" role="img" aria-label="音名与唱名双层对照图">
+        <text x="48" y="44" fill="#68736c" font-size="12">固定音名</text><text x="48" y="201" fill="#68736c" font-size="12">唱名</text>
+        ${names.map((item,index)=>{const x=115+index*91;return `<g><rect x="${x-34}" y="64" width="68" height="68" rx="16" fill="${index===0?'#77558c':'#e7edf0'}"/><text x="${x}" y="107" text-anchor="middle" fill="${index===0?'white':'#26352e'}" font-size="24" font-weight="800">${item[0]}</text><path d="M${x} 137 L${x} 174" stroke="#b8b6ae" stroke-width="2"/><circle cx="${x}" cy="211" r="30" fill="${index===0?'#f0c272':'#e2eee7'}"/><text x="${x}" y="217" text-anchor="middle" fill="#26352e" font-size="14" font-weight="800">${item[1]}</text></g>`;}).join('')}
+        <text x="380" y="272" text-anchor="middle" fill="#77558c" font-size="13" font-weight="800">两套名字在 C 大调语境中整齐对齐，但解决的问题不同</text>
+      </svg>`;
+    }
+    if (type === 'chromatic-wheel') {
+      const names=['C','C# / Db','D','D# / Eb','E','F','F# / Gb','G','G# / Ab','A','A# / Bb','B'];
+      return `<svg viewBox="0 0 760 320" role="img" aria-label="十二个音循环图">
+        <circle cx="380" cy="158" r="112" fill="none" stroke="#d9d7cf" stroke-width="3"/>
+        ${names.map((name,index)=>{const angle=-Math.PI/2+index*Math.PI*2/12;const x=380+Math.cos(angle)*112;const y=158+Math.sin(angle)*112;const basic=!name.includes('/');return `<g><circle cx="${x}" cy="${y}" r="${basic?30:26}" fill="${index===0?'#d98f3b':basic?'#1e5b45':'#77558c'}"/><text x="${x}" y="${y+4}" text-anchor="middle" fill="white" font-size="${name.length>3?9:13}" font-weight="800">${name}</text></g>`;}).join('')}
+        <circle cx="380" cy="158" r="55" fill="#f5f3ed" stroke="#d9d7cf"/><text x="380" y="151" text-anchor="middle" fill="#77558c" font-size="25" font-weight="800">12</text><text x="380" y="175" text-anchor="middle" fill="#68736c" font-size="12">半音一整轮</text>
+        <text x="380" y="313" text-anchor="middle" fill="#68736c" font-size="12">走完第 12 步，回到更高的同名音</text>
+      </svg>`;
+    }
+    if (type === 'semitone-whole') {
+      return `<svg viewBox="0 0 760 285" role="img" aria-label="吉他上一品半音两品全音图">
+        <rect x="70" y="78" width="620" height="94" rx="12" fill="#b97b43"/>
+        ${[70,225,380,535,690].map((x,index)=>`<line x1="${x}" y1="78" x2="${x}" y2="172" stroke="#ecdfc5" stroke-width="${index===0?3:7}"/>`).join('')}
+        <line x1="70" y1="125" x2="690" y2="125" stroke="#f5ead6" stroke-width="4"/>
+        ${[['C',147,'#1e5b45'],['C# / Db',302,'#77558c'],['D',457,'#d98f3b']].map(item=>`<g><circle cx="${item[1]}" cy="125" r="24" fill="${item[2]}"/><text x="${item[1]}" y="131" text-anchor="middle" fill="white" font-size="${item[0].length>3?10:16}" font-weight="800">${item[0]}</text></g>`).join('')}
+        <path d="M147 61 Q224 22 302 61" fill="none" stroke="#77558c" stroke-width="3"/><text x="224" y="29" text-anchor="middle" fill="#77558c" font-size="13" font-weight="800">一品 = 半音</text>
+        <path d="M147 199 Q302 255 457 199" fill="none" stroke="#d98f3b" stroke-width="3"/><text x="302" y="260" text-anchor="middle" fill="#a35f20" font-size="13" font-weight="800">两品 = 全音</text>
+        <text x="612" y="207" fill="#68736c" font-size="11">向琴身升高 →</text>
+      </svg>`;
+    }
+    if (type === 'natural-neighbors') {
+      const whites=['C','D','E','F','G','A','B','C'];
+      const blacks=[1,2,4,5,6];
+      return `<svg viewBox="0 0 760 300" role="img" aria-label="钢琴键盘上 E-F 与 B-C 相邻图">
+        <g transform="translate(76 45)">${whites.map((name,index)=>`<g><rect x="${index*76}" width="76" height="178" fill="white" stroke="#3d443f" stroke-width="2"/><text x="${index*76+38}" y="158" text-anchor="middle" fill="#26352e" font-size="17" font-weight="800">${name}</text></g>`).join('')}${blacks.map(index=>`<rect x="${index*76-23}" width="46" height="108" rx="0 0 7 7" fill="#26352e"/>`).join('')}</g>
+        <path d="M266 232 L266 251 L342 251 L342 232" fill="none" stroke="#d98f3b" stroke-width="4"/><text x="304" y="278" text-anchor="middle" fill="#a35f20" font-size="13" font-weight="800">E–F：没有中间键 · 半音</text>
+        <path d="M570 232 L570 251 L646 251 L646 232" fill="none" stroke="#77558c" stroke-width="4"/><text x="608" y="295" text-anchor="middle" fill="#77558c" font-size="13" font-weight="800">B–C：没有中间键 · 半音</text>
+      </svg>`;
+    }
+    const rows=[{title:'固定唱名',start:'C 大调',notes:[['C','Do'],['D','Re'],['E','Mi'],['F','Fa'],['G','Sol']]},{title:'首调唱名',start:'G 大调',notes:[['G','Do'],['A','Re'],['B','Mi'],['C','Fa'],['D','Sol']]}];
+    return `<svg viewBox="0 0 760 310" role="img" aria-label="固定唱名与首调唱名对照图">
+      ${rows.map((row,rowIndex)=>{const y=48+rowIndex*130;return `<g><text x="38" y="${y+10}" fill="${rowIndex?'#77558c':'#1e5b45'}" font-size="15" font-weight="800">${row.title}</text><text x="38" y="${y+34}" fill="#68736c" font-size="11">${row.start}</text>${row.notes.map((note,index)=>{const x=235+index*101;return `<g><rect x="${x-39}" y="${y-16}" width="78" height="76" rx="14" fill="${index===0?(rowIndex?'#eee6f3':'#e2eee7'):'#fffef9'}" stroke="#d9d7cf"/><text x="${x}" y="${y+12}" text-anchor="middle" fill="#26352e" font-size="18" font-weight="800">${note[0]}</text><text x="${x}" y="${y+39}" text-anchor="middle" fill="${rowIndex?'#77558c':'#1e5b45'}" font-size="12" font-weight="800">${note[1]}</text></g>`;}).join('')}</g>`;}).join('')}
+      <text x="380" y="299" text-anchor="middle" fill="#68736c" font-size="12">固定唱名固定 C=Do；首调唱名让当前主音成为 Do</text>
+    </svg>`;
+  }
+
   function renderLessonDiagram(type) {
     const fixed = {'guitar-anatomy': anatomyDiagram, 'posture': postureDiagram, 'fret-pressure': pressureDiagram, 'pick-motion': pickDiagram, 'spider-grid': spiderDiagram, 'chord-reading': chordReadingDiagram};
     if (fixed[type]) return fixed[type]();
@@ -260,6 +314,7 @@
     if (['tab-orientation','tab-numbers','tab-legato','tab-articulation','tab-reading-check'].includes(type)) return tabLessonDiagram(type);
     if (['anchor-change','lead-finger','small-chords','chord-loop','change-test'].includes(type)) return processDiagram(type);
     if (['beat-bar','meter-bpm','quarter-strum','eighth-strum','rest-strum','pop-strum'].includes(type)) return rhythmLessonDiagram(type);
+    if (['pitch-vibration','note-dual-names','chromatic-wheel','semitone-whole','natural-neighbors','solfege-systems'].includes(type)) return pitchLessonDiagram(type);
     return anatomyDiagram();
   }
 
