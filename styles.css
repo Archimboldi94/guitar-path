@@ -121,6 +121,7 @@ h3 { margin-bottom: 9px; font-size: 16px; }
 .stage-tone-4 { --stage-color: #435f87; --stage-soft: #e4eaf2; }
 .stage-tone-5 { --stage-color: #77558c; --stage-soft: #eee6f3; }
 .stage-tone-6 { --stage-color: #2f7771; --stage-soft: #dfeeed; }
+.stage-tone-7 { --stage-color: #965568; --stage-soft: #f2e4e8; }
 .home-lab-section { padding: 38px; border-radius: 24px; background: var(--green); color: white; }
 .home-lab-section .eyebrow { color: #e4b66f; }
 .home-lab-section .home-section-heading > p { color: #b9cec4; }
@@ -318,6 +319,19 @@ select, input[type="number"] { min-height: 42px; padding: 8px 34px 8px 11px; bor
 .lesson-fret-note.highlighted { border-color: rgba(47,119,113,.42); background: #fbfdfc; }
 .lesson-fret-note:hover, .lesson-fret-note.playing, .lesson-fret-note.revealed { z-index: 2; opacity: 1; transform: translateY(-2px); border-color: #d39b49; background: #fff0d4; }
 .lesson-fret-note.playing b, .lesson-fret-note.revealed b { color: #9a5c17; }
+
+.interval-demo-section > .muted { margin: -8px 0 18px; font-size: 13px; }
+.interval-pair-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.interval-pair-card { display: grid; gap: 13px; min-width: 0; padding: 18px; color: var(--ink); border: 1px solid rgba(150,85,104,.24); border-radius: 15px; background: #faf3f5; text-align: left; cursor: pointer; transition: transform .14s ease, border-color .14s ease, box-shadow .14s ease; }
+.interval-pair-card:hover, .interval-pair-card.playing { transform: translateY(-2px); border-color: #b36f82; box-shadow: 0 12px 26px rgba(92,50,62,.09); }
+.interval-pair-name { color: #87485b; font-family: Georgia, "Songti SC", serif; font-size: 20px; font-weight: 800; }
+.interval-pair-route { display: grid; grid-template-columns: 1fr auto 1fr; gap: 9px; align-items: center; }
+.interval-pair-route b { padding: 9px 7px; border: 1px solid rgba(150,85,104,.18); border-radius: 9px; background: rgba(255,255,255,.82); font-size: 11px; text-align: center; }
+.interval-pair-route i { color: #b06b7e; font-style: normal; }
+.interval-step-track { display: grid; grid-template-columns: repeat(var(--interval-steps), minmax(8px, 1fr)); gap: 3px; }
+.interval-step-track i { display: grid; place-items: center; min-height: 20px; color: #7a4857; border-radius: 5px; background: #ead5dc; font-size: 8px; font-style: normal; }
+.interval-step-track i.same { background: #e1ece7; color: #30624d; }
+.interval-pair-card small { color: var(--muted); font-size: 10px; }
 
 .tuner-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(310px, .8fr); gap: 22px; align-items: start; }
 .tuner-stage { --tuner-accent: #f1bd68; min-height: 650px; padding: 30px; overflow: hidden; color: white; border-radius: 22px; background: #173f31; box-shadow: 0 24px 60px rgba(10,25,19,.18); text-align: center; }

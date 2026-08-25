@@ -413,6 +413,65 @@
     </svg>`;
   }
 
+  // 第七阶段用同一套颜色区分起点、终点和半音距离，避免把音程变成纯数字表。
+  function intervalTheoryDiagram(type) {
+    const rootColor = '#965568';
+    const targetColor = '#2f7771';
+    const warmColor = '#d89446';
+    if (type === 'interval-listen-first') {
+      const targets = [['Db',1,'很近'],['D',2,'较近'],['E',4,'展开'],['G',7,'开阔'],['C',12,'同名']];
+      return `<svg viewBox="0 0 760 285" role="img" aria-label="从同一个 C 走向五个不同距离的音程图">
+        <text x="380" y="30" text-anchor="middle" fill="${rootColor}" font-size="16" font-weight="800">固定起点，先听终点离它有多远</text>
+        <circle cx="82" cy="141" r="31" fill="${rootColor}"/><text x="82" y="148" text-anchor="middle" fill="white" font-size="23" font-weight="800">C</text>
+        ${targets.map((target,index)=>{const x=210+index*105;const y=72+index*30;return `<g><path d="M113 141 Q${(113+x)/2} ${y-28} ${x-25} ${y}" fill="none" stroke="#cfc4c7" stroke-width="2"/><circle cx="${x}" cy="${y}" r="24" fill="${index===4?warmColor:targetColor}"/><text x="${x}" y="${y+6}" text-anchor="middle" fill="white" font-size="15" font-weight="800">${target[0]}</text><text x="${x}" y="${y+43}" text-anchor="middle" fill="#68736c" font-size="10">${target[1]} 半音 · ${target[2]}</text></g>`;}).join('')}
+        <text x="380" y="270" text-anchor="middle" fill="#68736c" font-size="12">音程比较的是关系：起点相同，终点不同，距离感随之改变</text>
+      </svg>`;
+    }
+    if (type === 'interval-degrees') {
+      const degrees = [['C','一度','0'],['D','二度','2'],['E','三度','4'],['F','四度','5'],['G','五度','7'],['A','六度','9'],['B','七度','11'],['C','八度','12']];
+      return `<svg viewBox="0 0 760 270" role="img" aria-label="C 到 C 的一度至八度计数图">
+        <text x="380" y="31" text-anchor="middle" fill="${rootColor}" font-size="16" font-weight="800">从 C 开始，起点也算 1：一度 → 八度</text>
+        ${degrees.map((item,index)=>{const x=62+index*91;return `<g><rect x="${x-35}" y="68" width="70" height="91" rx="13" fill="${index===0||index===7?'#f1e2e7':'#fffef9'}" stroke="${index===0||index===7?rootColor:'#d9d7cf'}"/><text x="${x}" y="102" text-anchor="middle" fill="${index===0||index===7?rootColor:'#26352e'}" font-size="22" font-weight="800">${item[0]}</text><text x="${x}" y="128" text-anchor="middle" fill="#405048" font-size="11" font-weight="800">${item[1]}</text><text x="${x}" y="146" text-anchor="middle" fill="#68736c" font-size="9">距C ${item[2]}半音</text>${index<7?`<text x="${x+45}" y="116" text-anchor="middle" fill="#b9b4b5" font-size="16">→</text>`:''}</g>`;}).join('')}
+        <text x="380" y="206" text-anchor="middle" fill="#405048" font-size="13">数字数音名字母；具体是大、小还是纯，再看实际半音数</text>
+        <text x="380" y="236" text-anchor="middle" fill="#68736c" font-size="11">八度不是 8 个半音：它数了 8 个字母位置，实际走完 12 个半音</text>
+      </svg>`;
+    }
+    if (type === 'thirds-compare') {
+      const rows = [{name:'小三度',end:'Eb',steps:3,y:84,color:targetColor},{name:'大三度',end:'E',steps:4,y:190,color:warmColor}];
+      return `<svg viewBox="0 0 760 300" role="img" aria-label="C 到降 E 与 C 到 E 的大小三度对照图">
+        <text x="380" y="31" text-anchor="middle" fill="${rootColor}" font-size="16" font-weight="800">都数 C–D–E，所以都是三度；差别在半音数</text>
+        ${rows.map(row=>`<g><text x="45" y="${row.y+7}" fill="${row.color}" font-size="13" font-weight="800">${row.name}</text><circle cx="154" cy="${row.y}" r="24" fill="${rootColor}"/><text x="154" y="${row.y+6}" text-anchor="middle" fill="white" font-weight="800">C</text>${Array.from({length:row.steps},(_,i)=>{const x=214+i*94;return `<g><line x1="${x-34}" y1="${row.y}" x2="${x+34}" y2="${row.y}" stroke="#c9c4c4" stroke-width="3"/><circle cx="${x}" cy="${row.y}" r="14" fill="#eadde1"/><text x="${x}" y="${row.y+4}" text-anchor="middle" fill="#765260" font-size="9">${i+1}</text></g>`;}).join('')}<circle cx="${214+row.steps*94}" cy="${row.y}" r="24" fill="${row.color}"/><text x="${214+row.steps*94}" y="${row.y+6}" text-anchor="middle" fill="white" font-weight="800">${row.end}</text><text x="674" y="${row.y+6}" text-anchor="end" fill="#68736c" font-size="11">${row.steps} 半音</text></g>`).join('')}
+        <text x="380" y="279" text-anchor="middle" fill="#68736c" font-size="12">终点从 E 降到 Eb，只移动一品，大三度就缩成小三度</text>
+      </svg>`;
+    }
+    if (type === 'fourth-fifth') {
+      const rows = [{name:'纯四度',end:'F',steps:5,y:92},{name:'纯五度',end:'G',steps:7,y:196}];
+      return `<svg viewBox="0 0 760 300" role="img" aria-label="纯四度五个半音与纯五度七个半音图">
+        <text x="380" y="31" text-anchor="middle" fill="${rootColor}" font-size="16" font-weight="800">C → F 是纯四度；C → G 是纯五度</text>
+        ${rows.map((row,rowIndex)=>`<g><text x="43" y="${row.y+5}" fill="${rowIndex?warmColor:targetColor}" font-size="13" font-weight="800">${row.name}</text><circle cx="154" cy="${row.y}" r="23" fill="${rootColor}"/><text x="154" y="${row.y+6}" text-anchor="middle" fill="white" font-weight="800">C</text><line x1="179" y1="${row.y}" x2="607" y2="${row.y}" stroke="#d5d0d0" stroke-width="4"/>${Array.from({length:row.steps},(_,i)=>`<circle cx="${210+i*(370/(row.steps-1||1))}" cy="${row.y}" r="7" fill="#d9c7cc"/>`).join('')}<circle cx="630" cy="${row.y}" r="23" fill="${rowIndex?warmColor:targetColor}"/><text x="630" y="${row.y+6}" text-anchor="middle" fill="white" font-weight="800">${row.end}</text><text x="678" y="${row.y+5}" fill="#68736c" font-size="10">${row.steps}半音</text></g>`).join('')}
+        <text x="380" y="276" text-anchor="middle" fill="#68736c" font-size="12">“纯”是性质名称，不是音色评价；四度和五度仍要分别数 5 与 7 个半音</text>
+      </svg>`;
+    }
+    if (type === 'interval-shapes') {
+      const points = [{s:5,f:3,n:'C',role:'root'},{s:5,f:5,n:'D',role:'root'},{s:4,f:3,n:'F',role:'target'},{s:4,f:5,n:'G',role:'target'},{s:4,f:7,n:'A',role:'target'},{s:3,f:5,n:'C',role:'octave'}];
+      return `<svg viewBox="0 0 760 310" role="img" aria-label="音程形状从 C 平移到 D 的指板图">
+        <defs><marker id="interval-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="${rootColor}"/></marker></defs>
+        <text x="380" y="29" text-anchor="middle" fill="${rootColor}" font-size="16" font-weight="800">形状整体向右两品：音名改变，关系不变</text>
+        <rect x="92" y="57" width="600" height="170" rx="14" fill="#9a663d"/>
+        ${[5,4,3].map((stringNumber,index)=>{const y=91+index*55;return `<g><text x="70" y="${y+5}" text-anchor="end" fill="#68736c" font-size="11">${stringNumber}弦</text><line x1="92" y1="${y}" x2="692" y2="${y}" stroke="#f0e2cc" stroke-width="${2.9-index*.7}"/></g>`;}).join('')}
+        ${[3,4,5,6,7].map((fret,index)=>{const x=126+index*132;return `<g><line x1="${x+58}" y1="57" x2="${x+58}" y2="227" stroke="#ead9bd" stroke-width="3"/><text x="${x}" y="249" text-anchor="middle" fill="#68736c" font-size="10">${fret}品</text></g>`;}).join('')}
+        ${points.map(point=>{const x=126+(point.f-3)*132;const y=91+(5-point.s)*55;const fill=point.role==='root'?rootColor:(point.role==='octave'?warmColor:targetColor);return `<g><circle cx="${x}" cy="${y}" r="17" fill="${fill}" stroke="white" stroke-width="2"/><text x="${x}" y="${y+5}" text-anchor="middle" fill="white" font-size="11" font-weight="800">${point.n}</text></g>`;}).join('')}
+        <path d="M126 274 H378" stroke="${rootColor}" stroke-width="3" marker-end="url(#interval-arrow)"/><text x="252" y="297" text-anchor="middle" fill="${rootColor}" font-size="11" font-weight="800">整体右移 2 品</text>
+      </svg>`;
+    }
+    const summary = [['小二度','1'],['大二度','2'],['小三度','3'],['大三度','4'],['纯四度','5'],['纯五度','7'],['纯八度','12']];
+    return `<svg viewBox="0 0 760 300" role="img" aria-label="七种重点音程与半音数复习图">
+      <text x="380" y="30" text-anchor="middle" fill="${rootColor}" font-size="16" font-weight="800">先听类别，再用半音数和指板位置核对</text>
+      ${summary.map((item,index)=>{const x=73+(index%4)*174;const y=65+Math.floor(index/4)*95;return `<g><rect x="${x}" y="${y}" width="148" height="70" rx="13" fill="${index<4?'#faf0f3':'#edf5f3'}" stroke="${index<4?'#d7b6c0':'#b9d4cf'}"/><text x="${x+18}" y="${y+29}" fill="${index<4?rootColor:targetColor}" font-size="13" font-weight="800">${item[0]}</text><text x="${x+125}" y="${y+48}" text-anchor="end" fill="#26352e" font-size="25" font-weight="800">${item[1]}</text><text x="${x+18}" y="${y+52}" fill="#68736c" font-size="9">半音</text></g>`;}).join('')}
+      <text x="380" y="277" text-anchor="middle" fill="#68736c" font-size="12">小2 1 · 大2 2 · 小3 3 · 大3 4 · 纯4 5 · 纯5 7 · 纯8 12</text>
+    </svg>`;
+  }
+
   function renderLessonDiagram(type) {
     const fixed = {'guitar-anatomy': anatomyDiagram, 'posture': postureDiagram, 'fret-pressure': pressureDiagram, 'pick-motion': pickDiagram, 'spider-grid': spiderDiagram, 'chord-reading': chordReadingDiagram};
     if (fixed[type]) return fixed[type]();
@@ -422,6 +481,7 @@
     if (['beat-bar','meter-bpm','quarter-strum','eighth-strum','rest-strum','pop-strum'].includes(type)) return rhythmLessonDiagram(type);
     if (['pitch-vibration','note-dual-names','chromatic-wheel','semitone-whole','natural-neighbors','solfege-systems'].includes(type)) return pitchLessonDiagram(type);
     if (['tuning-strings','sixth-string-cycle','fifth-string-cycle','fret-semitone-grid','same-note-positions','fret-hunt-test'].includes(type)) return fretboardTheoryDiagram(type);
+    if (['interval-listen-first','interval-degrees','thirds-compare','fourth-fifth','interval-shapes','interval-ear-check'].includes(type)) return intervalTheoryDiagram(type);
     return anatomyDiagram();
   }
 
