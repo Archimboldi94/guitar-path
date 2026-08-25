@@ -8,6 +8,11 @@
   const toast = document.getElementById('toast');
   let rhythmTimer = null;
   let rhythmStep = 0;
+  let rhythmBpm = 60;
+  let rhythmSubdivision = 8;
+  let rhythmPattern = 'quarter';
+  let rhythmPlayer = null;
+  let rhythmPlayerReopen = null;
 
   function showToast(message) {
     toast.textContent = message;
@@ -377,22 +382,100 @@
     rest: {label:'带休止练习', marks:['↓','·','·','↑','↓','·','↓','↑']}
   };
 
+  // 悬浮播放器独立于页面正文存在，切换课程时节拍不会被重新渲染掉。
+  function initRhythmPlayer() {
+    rhythmPlayer = document.createElement('aside');
+    rhythmPlayer.className = 'rhythm-player';
+    rhythmPlayer.setAttribute('aria-label', '背景节奏播放器');
+    rhythmPlayer.innerHTML = `<div class="rhythm-player-head">
+      <div><span class="rhythm-live-dot"></span><small>背景节奏</small><strong id="player-pattern-name">${rhythmPatterns[rhythmPattern].label}</strong></div>
+      <button class="rhythm-icon-button" id="player-collapse" type="button" aria-label="收起播放器">—</button>
+    </div>
+    <div class="rhythm-player-main">
+      <button class="rhythm-bpm-button" id="player-bpm-down" type="button" aria-label="速度减 5">−</button>
+      <div class="rhythm-player-bpm"><strong id="player-bpm-value">${rhythmBpm}</strong><span>BPM</span></div>
+      <button class="rhythm-bpm-button" id="player-bpm-up" type="button" aria-label="速度加 5">＋</button>
+    </div>
+    <div class="rhythm-player-beats" aria-label="当前拍号">
+      ${[1,2,3,4].map(beat => `<span data-player-beat="${beat - 1}">${beat}</span>`).join('')}
+    </div>
+    <div class="rhythm-player-actions">
+      <button class="rhythm-play-button" id="player-toggle" type="button">▶ 播放</button>
+      <button class="rhythm-stop-button" id="player-stop" type="button">■ 停止</button>
+      <a href="#/rhythm">完整实验室 ↗</a>
+    </div>`;
+    rhythmPlayerReopen = document.createElement('button');
+    rhythmPlayerReopen.className = 'rhythm-player-reopen';
+    rhythmPlayerReopen.type = 'button';
+    rhythmPlayerReopen.setAttribute('aria-label', '打开背景节奏播放器');
+    rhythmPlayerReopen.innerHTML = `<span>♩</span><b>${rhythmBpm} BPM</b>`;
+    document.body.append(rhythmPlayer, rhythmPlayerReopen);
+
+    document.getElementById('player-collapse').addEventListener('click', closeRhythmPlayer);
+    rhythmPlayerReopen.addEventListener('click', openRhythmPlayer);
+    document.getElementById('player-toggle').addEventListener('click', () => rhythmTimer ? pauseRhythm() : startRhythm());
+    document.getElementById('player-stop').addEventListener('click', stopRhythm);
+    document.getElementById('player-bpm-down').addEventListener('click', () => setRhythmBpm(rhythmBpm - 5));
+    document.getElementById('player-bpm-up').addEventListener('click', () => setRhythmBpm(rhythmBpm + 5));
+    syncRhythmUI();
+  }
+
+  function openRhythmPlayer() {
+    rhythmPlayer.classList.add('open');
+    rhythmPlayerReopen.classList.remove('show');
+  }
+
+  function closeRhythmPlayer() {
+    rhythmPlayer.classList.remove('open');
+    rhythmPlayerReopen.classList.add('show');
+  }
+
+  function setRhythmBpm(value) {
+    rhythmBpm = Math.max(40, Math.min(200, Number(value)));
+    if (rhythmTimer) restartRhythmTimer();
+    syncRhythmUI();
+  }
+
+  function syncRhythmUI() {
+    const bpmRange = document.getElementById('bpm-range');
+    const bpmValue = document.getElementById('bpm-value');
+    const pageToggle = document.getElementById('metronome-toggle');
+    const playerToggle = document.getElementById('player-toggle');
+    const playerStop = document.getElementById('player-stop');
+    if (bpmRange) bpmRange.value = rhythmBpm;
+    if (bpmValue) bpmValue.textContent = rhythmBpm;
+    if (pageToggle) pageToggle.textContent = rhythmTimer ? '❚❚ 暂停' : '▶ 开始背景播放';
+    if (playerToggle) playerToggle.textContent = rhythmTimer ? '❚❚ 暂停' : '▶ 播放';
+    if (playerStop) playerStop.disabled = !rhythmTimer && rhythmStep === 0;
+    if (rhythmPlayer) {
+      document.getElementById('player-bpm-value').textContent = rhythmBpm;
+      document.getElementById('player-pattern-name').textContent = rhythmPatterns[rhythmPattern].label;
+      rhythmPlayer.classList.toggle('playing', Boolean(rhythmTimer));
+    }
+    if (rhythmPlayerReopen) {
+      rhythmPlayerReopen.querySelector('b').textContent = `${rhythmBpm} BPM`;
+      rhythmPlayerReopen.classList.toggle('playing', Boolean(rhythmTimer));
+    }
+  }
+
   function renderRhythm() {
-    stopRhythm();
     breadcrumb.textContent = '节奏实验室';
     main.innerHTML = `<div class="page">
-      ${pageIntro('Rhythm lab','节奏实验室','右手像钟摆一样持续运动；有些位置碰弦，有些位置只是经过。先看清，再跟着点击声练。')}
-      <div class="lab-toolbar card"><div class="field"><label for="pattern-select">节奏型</label><select id="pattern-select">${Object.entries(rhythmPatterns).map(([key,val])=>`<option value="${key}">${val.label}</option>`).join('')}</select></div><div class="field"><label for="subdivision-select">显示细分</label><select id="subdivision-select"><option value="8">八分音符：1 & 2 & 3 & 4 &</option><option value="16">十六分音符：1 e & a</option></select></div></div>
+      ${pageIntro('Rhythm lab','节奏实验室','右手像钟摆一样持续运动；开始播放后，可以离开本页继续学习其他课程，节拍会在悬浮播放器中持续。')}
+      <div class="rhythm-background-note"><span>♩</span><div><strong>这是全站背景播放器</strong><small>切换课程不会停止；需要安静时可以暂停或完全停止。</small></div></div>
+      <div class="lab-toolbar card"><div class="field"><label for="pattern-select">节奏型</label><select id="pattern-select">${Object.entries(rhythmPatterns).map(([key,val])=>`<option value="${key}" ${key === rhythmPattern ? 'selected' : ''}>${val.label}</option>`).join('')}</select></div><div class="field"><label for="subdivision-select">显示细分</label><select id="subdivision-select"><option value="8" ${rhythmSubdivision === 8 ? 'selected' : ''}>八分音符：1 & 2 & 3 & 4 &</option><option value="16" ${rhythmSubdivision === 16 ? 'selected' : ''}>十六分音符：1 e & a</option></select></div></div>
       <section class="rhythm-stage">
-        <div class="bpm-display"><strong id="bpm-value">60</strong><span>BPM</span></div>
-        <div class="range-row"><input id="bpm-range" type="range" min="40" max="200" value="60"><span>40 — 200</span></div>
-        <div class="beat-grid" id="beat-grid">${renderBeatCells(8)}</div>
-        <div class="strum-pattern" id="strum-pattern">${renderStrums('quarter')}</div>
-        <div class="hero-actions"><button class="primary-button" id="metronome-toggle">▶ 开始</button><button class="secondary-button" id="tap-tempo">敲击测速</button></div>
+        <div class="bpm-display"><strong id="bpm-value">${rhythmBpm}</strong><span>BPM</span></div>
+        <div class="range-row"><input id="bpm-range" type="range" min="40" max="200" value="${rhythmBpm}"><span>40 — 200</span></div>
+        <div class="beat-grid" id="beat-grid" style="grid-template-columns:repeat(${rhythmSubdivision},1fr)">${renderBeatCells(rhythmSubdivision)}</div>
+        <div class="strum-pattern" id="strum-pattern">${renderStrums(rhythmPattern)}</div>
+        <div class="hero-actions"><button class="primary-button" id="metronome-toggle">${rhythmTimer ? '❚❚ 暂停' : '▶ 开始背景播放'}</button><button class="secondary-button" id="metronome-stop">■ 停止</button><button class="secondary-button" id="tap-tempo">敲击测速</button></div>
       </section>
       <div class="card section"><h3>怎样跟，而不是追</h3><ol><li>先听 2 小节，只让脚轻点地。</li><li>口数“1 & 2 & 3 & 4 &”，右手持续下上。</li><li>节奏型里的“·”表示不碰弦，但右手仍经过。</li><li>连续稳定 30 秒，再提高 3–5 BPM。</li></ol></div>
     </div>`;
     bindRhythmEvents();
+    openRhythmPlayer();
+    syncRhythmUI();
   }
 
   function renderBeatCells(count) {
@@ -406,25 +489,48 @@
 
   function bindRhythmEvents() {
     const bpmRange=document.getElementById('bpm-range'), bpmValue=document.getElementById('bpm-value'), pattern=document.getElementById('pattern-select'), subdivision=document.getElementById('subdivision-select');
-    bpmRange.addEventListener('input',()=>{bpmValue.textContent=bpmRange.value;if(rhythmTimer){stopRhythm();startRhythm();}});
-    pattern.addEventListener('change',()=>{document.getElementById('strum-pattern').innerHTML=renderStrums(pattern.value);});
-    subdivision.addEventListener('change',()=>{stopRhythm();const count=Number(subdivision.value);document.getElementById('beat-grid').style.gridTemplateColumns=`repeat(${count},1fr)`;document.getElementById('beat-grid').innerHTML=renderBeatCells(count);});
-    document.getElementById('metronome-toggle').addEventListener('click',()=>rhythmTimer?stopRhythm():startRhythm());
+    bpmRange.addEventListener('input',()=>{bpmValue.textContent=bpmRange.value;setRhythmBpm(bpmRange.value);});
+    pattern.addEventListener('change',()=>{rhythmPattern=pattern.value;document.getElementById('strum-pattern').innerHTML=renderStrums(rhythmPattern);syncRhythmUI();});
+    subdivision.addEventListener('change',()=>{rhythmSubdivision=Number(subdivision.value);rhythmStep=0;document.getElementById('beat-grid').style.gridTemplateColumns=`repeat(${rhythmSubdivision},1fr)`;document.getElementById('beat-grid').innerHTML=renderBeatCells(rhythmSubdivision);if(rhythmTimer)restartRhythmTimer();syncRhythmUI();});
+    document.getElementById('metronome-toggle').addEventListener('click',()=>rhythmTimer?pauseRhythm():startRhythm());
+    document.getElementById('metronome-stop').addEventListener('click',stopRhythm);
     let taps=[];
-    document.getElementById('tap-tempo').addEventListener('click',()=>{const now=Date.now();taps=taps.filter(t=>now-t<3000);taps.push(now);if(taps.length>1){const gaps=taps.slice(1).map((t,i)=>t-taps[i]);const bpm=Math.round(60000/(gaps.reduce((a,b)=>a+b,0)/gaps.length));const value=Math.max(40,Math.min(200,bpm));bpmRange.value=value;bpmValue.textContent=value;}});
+    document.getElementById('tap-tempo').addEventListener('click',()=>{const now=Date.now();taps=taps.filter(t=>now-t<3000);taps.push(now);if(taps.length>1){const gaps=taps.slice(1).map((t,i)=>t-taps[i]);setRhythmBpm(Math.round(60000/(gaps.reduce((a,b)=>a+b,0)/gaps.length)));}});
   }
 
   function startRhythm() {
-    const bpm=Number(document.getElementById('bpm-range').value), count=Number(document.getElementById('subdivision-select').value);
-    const interval=60000/bpm/(count===8?2:4);
-    const tick=()=>{const beats=document.querySelectorAll('.beat'),strums=document.querySelectorAll('.strum');beats.forEach((b,i)=>b.classList.toggle('active',i===rhythmStep));strums.forEach((s,i)=>s.classList.toggle('active',i===rhythmStep%(strums.length||1)));if(rhythmStep%(count===8?2:4)===0)ui.playClick(rhythmStep===0);rhythmStep=(rhythmStep+1)%count;};
-    tick();rhythmTimer=setInterval(tick,interval);document.getElementById('metronome-toggle').textContent='■ 停止';
+    openRhythmPlayer();
+    const tick=()=>{
+      const beats=document.querySelectorAll('.beat'),strums=document.querySelectorAll('.strum');
+      const divisionsPerBeat=rhythmSubdivision===8?2:4;
+      beats.forEach((beat,index)=>beat.classList.toggle('active',index===rhythmStep));
+      strums.forEach((strum,index)=>strum.classList.toggle('active',index===rhythmStep%(strums.length||1)));
+      document.querySelectorAll('[data-player-beat]').forEach((beat,index)=>beat.classList.toggle('active',index===Math.floor(rhythmStep/divisionsPerBeat)));
+      if(rhythmStep%divisionsPerBeat===0)ui.playClick(rhythmStep===0);
+      rhythmStep=(rhythmStep+1)%rhythmSubdivision;
+    };
+    tick();
+    rhythmTimer=setInterval(tick,60000/rhythmBpm/(rhythmSubdivision===8?2:4));
+    syncRhythmUI();
+  }
+
+  function restartRhythmTimer() {
+    clearInterval(rhythmTimer);
+    rhythmTimer=null;
+    startRhythm();
+  }
+
+  function pauseRhythm() {
+    clearInterval(rhythmTimer);
+    rhythmTimer=null;
+    syncRhythmUI();
   }
 
   function stopRhythm() {
     clearInterval(rhythmTimer);rhythmTimer=null;rhythmStep=0;
     document.querySelectorAll('.beat,.strum').forEach(item=>item.classList.remove('active'));
-    const toggle=document.getElementById('metronome-toggle');if(toggle)toggle.textContent='▶ 开始';
+    document.querySelectorAll('[data-player-beat]').forEach(item=>item.classList.remove('active'));
+    syncRhythmUI();
   }
 
   function renderMap() {
@@ -496,7 +602,6 @@
   }
 
   function navigate() {
-    stopRhythm();
     const [route,param] = routeParts();
     document.body.classList.remove('nav-open');
     setActiveNav(route==='lesson'?'course':route);
@@ -511,5 +616,6 @@
   document.addEventListener('keydown',event=>{if(event.key==='Escape'){document.body.classList.remove('focus-mode','nav-open');}});
   window.addEventListener('hashchange',navigate);
   window.addEventListener('beforeunload',stopRhythm);
+  initRhythmPlayer();
   navigate();
 })();
