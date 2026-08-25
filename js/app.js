@@ -38,45 +38,75 @@
     return `<header><div class="eyebrow">${eyebrow}</div><h1>${title}</h1><p class="lede">${lead}</p></header>`;
   }
 
+  // 首页视觉只使用网页原生图形，保证在电脑和 iPad 上都能清晰缩放。
+  function homeFretboardPreview() {
+    const strings = [62, 82, 102, 122, 142, 162];
+    const frets = [112, 180, 248, 316, 384, 452];
+    return `<div class="home-visual" aria-label="吉他指板与和弦学习预览">
+      <div class="visual-heading"><span>今天从这里开始</span><strong>第 1 课 · 认识六根弦</strong></div>
+      <svg class="home-fretboard" viewBox="0 0 520 220" role="img" aria-label="带音名提示的吉他指板">
+        <defs><linearGradient id="home-neck" x1="0" x2="1"><stop stop-color="#9d6035"/><stop offset="1" stop-color="#c4874e"/></linearGradient></defs>
+        <rect x="34" y="43" width="452" height="140" rx="18" fill="url(#home-neck)"/>
+        ${strings.map((y,index) => `<line x1="34" y1="${y}" x2="486" y2="${y}" stroke="#f3e5cb" stroke-width="${1.3 + index * .34}"/>`).join('')}
+        ${frets.map((x,index) => `<line x1="${x}" y1="43" x2="${x}" y2="183" stroke="#ead9bd" stroke-width="${index === 0 ? 7 : 3}"/>`).join('')}
+        <circle cx="214" cy="122" r="16" fill="#1e5b45"/><text x="214" y="127" text-anchor="middle" fill="white" font-size="13" font-weight="800">C</text>
+        <circle cx="282" cy="82" r="16" fill="#f3c476"/><text x="282" y="87" text-anchor="middle" fill="#173c2e" font-size="13" font-weight="800">E</text>
+        <circle cx="350" cy="142" r="16" fill="#f8f3e7"/><text x="350" y="147" text-anchor="middle" fill="#1e5b45" font-size="13" font-weight="800">G</text>
+        <text x="52" y="28" fill="#627068" font-size="12">音名不是要硬背，而是一次次在琴上遇见</text>
+        <text x="45" y="207" fill="#68736c" font-size="11">低音弦</text><text x="443" y="207" fill="#68736c" font-size="11">高音弦</text>
+      </svg>
+      <div class="visual-mini-cards">
+        <span><b>Em</b> 看按法 · 听声音</span>
+        <span><b>4/4</b> 跟节拍 · 练扫弦</span>
+      </div>
+    </div>`;
+  }
+
   function renderHome() {
     breadcrumb.textContent = '学习首页';
     main.innerHTML = `<div class="page">
-      <section class="dashboard-hero">
-        <div>
-          <div class="eyebrow">零基础 · 从第一步开始</div>
-          <h1>先让琴发出好声音，再解释声音背后的道理。</h1>
-          <p>你不需要“应该已经知道”任何东西。每个概念都会先让手、眼睛和耳朵体验，再解释它为什么存在、在吉他上到底在哪里。</p>
+      <section class="home-hero">
+        <div class="home-hero-copy">
+          <div class="home-kicker"><span></span> 零基础也能直接开始</div>
+          <h1>把吉他学明白，<br>也真正弹起来。</h1>
+          <p>不先塞给你一堆术语。每一课都从看得见的指法、听得到的声音和做得出的练习开始，再把乐理讲清楚。</p>
           <div class="hero-actions">
-            <a class="primary-button" href="#/lesson/1-1">从第 1 课开始</a>
-            <a class="secondary-button" href="#/course">自己选择一课</a>
-            <a class="secondary-button" href="#/practice">生成今日练习</a>
+            <a class="primary-button" href="#/lesson/1-1">开始第一课 <span>→</span></a>
+            <a class="secondary-button" href="#/course">浏览全部课程</a>
           </div>
+          <div class="home-method"><span>看图</span><i>→</i><span>听声音</span><i>→</i><span>上手练</span></div>
+        </div>
+        ${homeFretboardPreview()}
+      </section>
+
+      <section class="home-section">
+        <div class="home-section-heading"><div><div class="eyebrow">从这里选择</div><h2>四个阶段，先建立真正能用的基础</h2></div><a href="#/course">查看完整课程路线 →</a></div>
+        <div class="home-stage-grid">
+          ${course.stages.slice(0,4).map((stage,index) => `<a class="home-stage-card stage-tone-${index + 1}" href="#/lesson/${stage.id}-1">
+            <div class="home-stage-top"><span>阶段 ${String(stage.id).padStart(2,'0')}</span><b>${stage.tone}</b></div>
+            <h3>${stage.title}</h3>
+            <p>${stage.short}</p>
+            <div class="home-stage-meta"><span>${stageLessons(stage.id).length} 节完整课程</span><strong>进入阶段 →</strong></div>
+          </a>`).join('')}
         </div>
       </section>
 
-      <div class="stat-grid">
-        <div class="stat-card"><small>完整正文</small><strong>23 节课</strong></div>
-        <div class="stat-card"><small>已开放</small><strong>4 个阶段</strong></div>
-        <div class="stat-card"><small>单次练习</small><strong>20–60 分钟</strong></div>
-      </div>
-
-      <section class="section">
-        <div class="section-heading"><div><div class="eyebrow">Quick tools</div><h2>快速工具</h2></div><p class="muted">遇到抽象概念，随时回到琴上验证。</p></div>
-        <div class="tool-grid">
+      <section class="home-section home-lab-section">
+        <div class="home-section-heading"><div><div class="eyebrow">互动实验室</div><h2>不确定？马上看、听、试一下</h2></div><p>把抽象概念变成手和耳朵能验证的东西。</p></div>
+        <div class="home-lab-grid">
           ${[
-            ['#/fretboard','♬','指板实验室','找音、音阶与音程'],['#/chords','⌘','和弦实验室','看按法与组成音'],['#/rhythm','♩','节奏实验室','跟拍与扫弦'],['#/map','◇','知识地图','看懂先后关系'],['#/glossary','字','小白词典','快速查陌生词']
-          ].map(item => `<a class="tool-card hoverable" href="${item[0]}"><span>${item[1]}</span><strong>${item[2]}</strong><small>${item[3]}</small></a>`).join('')}
+            ['#/fretboard','01','指板实验室','点一下就能找音、看音阶和音程','六根弦 · 12 个音'],
+            ['#/chords','02','和弦实验室','看清每根手指的位置，并试听和弦','指法图 · 真实听感'],
+            ['#/rhythm','03','节奏实验室','打开节拍器，跟着扫弦格子练习','节拍器 · 扫弦型']
+          ].map(item => `<a class="home-lab-card" href="${item[0]}"><span class="home-lab-number">${item[1]}</span><div><h3>${item[2]}</h3><p>${item[3]}</p><small>${item[4]}</small></div><b>↗</b></a>`).join('')}
         </div>
+        <div class="home-reference-links"><span>随手查一查</span><a href="#/map">知识地图 →</a><a href="#/glossary">小白词典 →</a><a href="#/practice">生成今日练习 →</a></div>
       </section>
 
-      <section class="section">
-        <div class="section-heading"><div><div class="eyebrow">24 stages</div><h2>半年的学习路线，一眼看清</h2></div><a class="secondary-button compact" href="#/course">查看 120 课目录</a></div>
-        <div class="roadmap">${course.stages.map(stage => `<a href="#/course?stage=${stage.id}" class="roadmap-node ${stage.id > 4 ? 'locked' : ''}" data-stage="${String(stage.id).padStart(2,'0')}"><strong>${stage.title}</strong></a>`).join('')}</div>
-      </section>
-
-      <section class="section card">
-        <div class="section-heading"><div><div class="eyebrow">Learning promise</div><h2>从“照着按”到“自己推导”</h2></div></div>
-        <p class="lede">课程不要求你第一周背完整指板，也不会让你为了学理论几个月不弹歌。理解规律 → 在琴上使用 → 在后续反复遇见 → 自然记住。</p>
+      <section class="home-route-callout">
+        <div><span class="eyebrow">完整学习路线</span><h2>现在先学会弹，之后再一步步理解为什么。</h2></div>
+        <p>整套课程共规划 24 个阶段、120 节课。从开放和弦和节奏开始，逐渐走向指板、和声、即兴与独立编配。</p>
+        <a class="secondary-button" href="#/course">看看后面会学什么</a>
       </section>
     </div>`;
   }
@@ -127,7 +157,7 @@
     </div>`;
     document.querySelectorAll('[data-stage-open]').forEach(button => button.addEventListener('click', () => {
       document.getElementById('stage-detail-slot').innerHTML = stageDetail(button.dataset.stageOpen);
-      if (window.innerWidth < 821) document.getElementById('stage-detail-slot').scrollIntoView({behavior:'smooth'});
+      if (window.innerWidth < 1025) document.getElementById('stage-detail-slot').scrollIntoView({behavior:'smooth'});
     }));
     document.querySelectorAll('[data-jump-stage]').forEach(button => button.addEventListener('click', () => {
       document.getElementById(`available-stage-${button.dataset.jumpStage}`).scrollIntoView({behavior:'smooth', block:'start'});
