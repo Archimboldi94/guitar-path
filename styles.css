@@ -120,6 +120,7 @@ h3 { margin-bottom: 9px; font-size: 16px; }
 .stage-tone-3 { --stage-color: #8b4a48; --stage-soft: #f1e2df; }
 .stage-tone-4 { --stage-color: #435f87; --stage-soft: #e4eaf2; }
 .stage-tone-5 { --stage-color: #77558c; --stage-soft: #eee6f3; }
+.stage-tone-6 { --stage-color: #2f7771; --stage-soft: #dfeeed; }
 .home-lab-section { padding: 38px; border-radius: 24px; background: var(--green); color: white; }
 .home-lab-section .eyebrow { color: #e4b66f; }
 .home-lab-section .home-section-heading > p { color: #b9cec4; }
@@ -297,6 +298,27 @@ select, input[type="number"] { min-height: 42px; padding: 8px 34px 8px 11px; bor
 .ear-note-buttons span { font-weight: 800; }
 .ear-note-buttons small { margin-top: 2px; color: var(--muted); font-size: 9px; }
 
+.fretboard-demo-heading { display: flex; justify-content: space-between; gap: 20px; align-items: end; margin-bottom: 18px; }
+.fretboard-demo-heading h2 { margin-bottom: 5px; }
+.fretboard-demo-heading p { margin: 0; color: var(--muted); font-size: 13px; }
+.lesson-fretboard { padding: 14px; overflow: hidden; border: 1px solid rgba(47,119,113,.22); border-radius: 16px; background: #eef5f4; }
+.lesson-fret-scroll { overflow-x: auto; padding-bottom: 5px; }
+.lesson-fret-grid { display: grid; gap: 6px; min-width: 850px; }
+.lesson-fret-row { display: grid; grid-template-columns: 82px repeat(var(--lesson-fret-count), minmax(50px, 1fr)); gap: 5px; min-height: 64px; }
+.lesson-string-label { display: flex; justify-content: center; flex-direction: column; padding: 8px; color: white; border-radius: 9px; background: #244e46; }
+.lesson-string-label strong, .lesson-string-label small { display: block; }
+.lesson-string-label strong { font-size: 12px; }
+.lesson-string-label small { margin-top: 2px; color: #bdd1c9; font-size: 8px; }
+.lesson-fret-note { position: relative; display: grid; place-items: center; align-content: center; min-width: 0; padding: 6px 3px; color: var(--ink); border: 1px solid rgba(47,119,113,.2); border-radius: 9px; background: rgba(255,255,255,.82); cursor: pointer; transition: transform .13s ease, border-color .13s ease, background .13s ease, opacity .13s ease; }
+.lesson-fret-note::after { content: ""; position: absolute; left: 50%; right: -6px; top: 50%; z-index: -1; height: 1px; background: rgba(63,82,74,.23); }
+.lesson-fret-note small, .lesson-fret-note b { display: block; }
+.lesson-fret-note small { color: var(--muted); font-size: 8px; }
+.lesson-fret-note b { margin-top: 3px; color: #28675f; font-size: 11px; }
+.lesson-fret-note.dimmed { opacity: .34; }
+.lesson-fret-note.highlighted { border-color: rgba(47,119,113,.42); background: #fbfdfc; }
+.lesson-fret-note:hover, .lesson-fret-note.playing, .lesson-fret-note.revealed { z-index: 2; opacity: 1; transform: translateY(-2px); border-color: #d39b49; background: #fff0d4; }
+.lesson-fret-note.playing b, .lesson-fret-note.revealed b { color: #9a5c17; }
+
 .tuner-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(310px, .8fr); gap: 22px; align-items: start; }
 .tuner-stage { --tuner-accent: #f1bd68; min-height: 650px; padding: 30px; overflow: hidden; color: white; border-radius: 22px; background: #173f31; box-shadow: 0 24px 60px rgba(10,25,19,.18); text-align: center; }
 .tuner-stage[data-state="tuned"] { --tuner-accent: #82c7a7; }
@@ -388,11 +410,11 @@ input[type="range"] { width: 100%; accent-color: #e5b569; }
 .rhythm-stop-button { min-height: 40px; padding: 0 12px; border-radius: 9px; background: rgba(255,255,255,.1); }
 .rhythm-stop-button:disabled { opacity: .42; cursor: default; }
 .rhythm-player-actions a { grid-column: 1 / -1; margin-top: 3px; color: #bcd0c6; font-size: 10px; text-align: right; }
-.rhythm-player-reopen { position: fixed; z-index: 89; right: 22px; bottom: 22px; display: none; gap: 8px; align-items: center; min-height: 46px; padding: 8px 14px 8px 9px; color: white; border: 0; border-radius: 99px; background: #173f31; box-shadow: 0 12px 32px rgba(10,25,19,.25); cursor: pointer; }
-.rhythm-player-reopen.show { display: inline-flex; }
-.rhythm-player-reopen span { display: grid; place-items: center; width: 29px; height: 29px; color: #173f31; border-radius: 50%; background: #f1bd68; }
-.rhythm-player-reopen b { font-size: 11px; }
-.rhythm-player-reopen.playing span { animation: rhythm-pulse 1s ease-in-out infinite; }
+.rhythm-player-reopen { position: fixed; z-index: 89; right: 22px; bottom: 22px; display: none; place-items: center; width: 58px; height: 58px; padding: 7px; color: #173f31; border: 0; border-radius: 50%; background: #f1bd68; box-shadow: 0 12px 32px rgba(10,25,19,.25); cursor: pointer; }
+.rhythm-player-reopen.show { display: grid; }
+.rhythm-player-reopen span { font-size: 22px; line-height: .8; }
+.rhythm-player-reopen small { font-size: 8px; font-weight: 800; line-height: 1; }
+.rhythm-player-reopen.playing { box-shadow: 0 0 0 6px rgba(241,189,104,.2), 0 12px 32px rgba(10,25,19,.25); animation: rhythm-pulse 1s ease-in-out infinite; }
 @keyframes rhythm-pulse { 50% { transform: scale(.88); opacity: .72; } }
 .strum.active { border-color: #f1c378; color: #f1c378; }
 
@@ -519,6 +541,9 @@ body.focus-mode .page.narrow { width: min(760px, calc(100% - 40px)); padding-top
   .ear-demo-group-head { align-items: stretch; flex-direction: column; }
   .ear-demo-group-head button { width: 100%; }
   .ear-note-buttons { display: grid; grid-template-columns: 1fr 1fr; }
+  .fretboard-demo-heading { align-items: stretch; flex-direction: column; }
+  .fretboard-demo-heading button { width: 100%; }
+  .lesson-fretboard { padding: 10px; }
   .tuner-stage { min-height: 590px; padding: 25px 16px; }
   .tuner-note strong { font-size: 96px; }
   .tuner-actions { align-items: stretch; flex-direction: column; }

@@ -370,6 +370,49 @@
     </svg>`;
   }
 
+  // 第六阶段用指板形状反复呈现“相邻一品”和“十二品循环”两条主线。
+  function fretboardTheoryDiagram(type) {
+    const pitchName = midi => noteNames[midi % 12];
+    const sequenceSvg = (open, title, anchors = []) => `<svg viewBox="0 0 760 245" role="img" aria-label="${title}">
+      <text x="380" y="28" text-anchor="middle" fill="#2f7771" font-size="16" font-weight="800">${title}</text>
+      <rect x="48" y="58" width="664" height="112" rx="14" fill="#9a663d"/>
+      ${Array.from({length:13},(_,fret)=>{const x=61+fret*52;const anchor=anchors.includes(fret);return `<g><line x1="${x+39}" y1="58" x2="${x+39}" y2="170" stroke="#e9d8bd" stroke-width="${fret===0?5:2}"/><circle cx="${x+15}" cy="114" r="${anchor?19:16}" fill="${anchor?'#f1bd68':'#245e55'}"/><text x="${x+15}" y="119" text-anchor="middle" fill="${anchor?'#293f37':'white'}" font-size="${pitchName(open+fret).length>1?10:13}" font-weight="800">${pitchName(open+fret)}</text><text x="${x+15}" y="194" text-anchor="middle" fill="#68736c" font-size="9">${fret}品</text></g>`;}).join('')}
+      <text x="380" y="228" text-anchor="middle" fill="#68736c" font-size="12">从左向右每格一个半音；0 品与 12 品同名，12 品声音更高</text>
+    </svg>`;
+    if (type === 'sixth-string-cycle') return sequenceSvg(40, '6 弦：E 出发，走十二品回到 E', [0,1,5,7,8,12]);
+    if (type === 'fifth-string-cycle') return sequenceSvg(45, '5 弦：A 出发，走十二品回到 A', [0,3,5,7,10,12]);
+    if (type === 'tuning-strings') {
+      const tuning = [[6,'E',40],[5,'A',45],[4,'D',50],[3,'G',55],[2,'B',59],[1,'E',64]];
+      return `<svg viewBox="0 0 760 300" role="img" aria-label="标准调弦与十二品同名图">
+        <text x="380" y="28" text-anchor="middle" fill="#2f7771" font-size="16" font-weight="800">标准调弦：从粗 6 弦到细 1 弦</text>
+        ${tuning.map((item,index)=>{const y=62+index*36;return `<g><text x="54" y="${y+5}" text-anchor="end" fill="#405048" font-size="12" font-weight="800">${item[0]}弦</text><line x1="76" y1="${y}" x2="675" y2="${y}" stroke="#8b6a4d" stroke-width="${4-index*.45}"/><circle cx="105" cy="${y}" r="16" fill="#245e55"/><text x="105" y="${y+5}" text-anchor="middle" fill="white" font-size="13" font-weight="800">${item[1]}</text><text x="143" y="${y+4}" fill="#68736c" font-size="10">空弦</text><path d="M185 ${y} H590" stroke="#c6cbc8" stroke-width="2" stroke-dasharray="5 6"/><circle cx="625" cy="${y}" r="16" fill="#f1bd68"/><text x="625" y="${y+5}" text-anchor="middle" fill="#293f37" font-size="13" font-weight="800">${item[1]}</text><text x="652" y="${y+4}" fill="#68736c" font-size="10">12品</text></g>`;}).join('')}
+        <text x="380" y="288" text-anchor="middle" fill="#68736c" font-size="12">两根 E 弦音名相同但音区不同；每根弦的 12 品都回到自己的空弦音名</text>
+      </svg>`;
+    }
+    if (type === 'fret-semitone-grid') {
+      const notes = ['E','F','F#','G','G#','A'];
+      return `<svg viewBox="0 0 760 260" role="img" aria-label="每移动一品就是一个半音图">
+        <text x="380" y="30" text-anchor="middle" fill="#2f7771" font-size="16" font-weight="800">一格一格走：每移动一品 = 一个半音</text>
+        ${notes.map((note,index)=>{const x=95+index*112;return `<g><rect x="${x-38}" y="78" width="76" height="84" rx="13" fill="${index===0||index===5?'#dfeeed':'#fffef9'}" stroke="#abc9c5"/><text x="${x}" y="112" text-anchor="middle" fill="#245e55" font-size="19" font-weight="800">${note}</text><text x="${x}" y="143" text-anchor="middle" fill="#68736c" font-size="10">${index} 品</text>${index<5?`<g><text x="${x+56}" y="106" text-anchor="middle" fill="#d18c3e" font-size="17">→</text><text x="${x+56}" y="129" text-anchor="middle" fill="#68736c" font-size="9">半音</text></g>`:''}</g>`;}).join('')}
+        <text x="380" y="218" text-anchor="middle" fill="#405048" font-size="13">跳过一格才是全音；E–F 虽然字母相邻，也仍只移动一品</text>
+      </svg>`;
+    }
+    if (type === 'same-note-positions') {
+      const tuning = [64,59,55,50,45,40];
+      return `<svg viewBox="0 0 760 330" role="img" aria-label="E 音在指板上的多个位置图">
+        <text x="380" y="28" text-anchor="middle" fill="#2f7771" font-size="16" font-weight="800">同一个 E，可以出现在多根弦与多个品位</text>
+        ${tuning.map((open,index)=>{const y=60+index*40;return `<g><text x="48" y="${y+5}" text-anchor="end" fill="#68736c" font-size="10">${index+1}弦</text><line x1="67" y1="${y}" x2="711" y2="${y}" stroke="#8b6a4d" stroke-width="${1+index*.35}"/>${Array.from({length:13},(_,fret)=>{const x=78+fret*50;const isE=pitchName(open+fret)==='E';return `<g><line x1="${x+22}" y1="${y-15}" x2="${x+22}" y2="${y+15}" stroke="#d9d7cf"/>${isE?`<circle cx="${x}" cy="${y}" r="14" fill="#f1bd68"/><text x="${x}" y="${y+4}" text-anchor="middle" fill="#293f37" font-size="11" font-weight="800">E</text>`:''}</g>`;}).join('')}</g>`;}).join('')}
+        <text x="380" y="310" text-anchor="middle" fill="#68736c" font-size="12">位置不同、音区可能不同，但音名类别仍是 E</text>
+      </svg>`;
+    }
+    const tasks = [['6弦 1品','F'],['6弦 8品','C'],['5弦 3品','C'],['5弦 7品','E'],['4弦 5品','G'],['2弦 5品','E']];
+    return `<svg viewBox="0 0 760 280" role="img" aria-label="第一次指板寻音测试图">
+      <text x="380" y="30" text-anchor="middle" fill="#2f7771" font-size="16" font-weight="800">先遮住答案：位置 → 数半音 → 说音名</text>
+      ${tasks.map((task,index)=>{const x=55+(index%3)*235;const y=62+Math.floor(index/3)*92;return `<g><rect x="${x}" y="${y}" width="205" height="70" rx="13" fill="#fffef9" stroke="#abc9c5"/><text x="${x+18}" y="${y+27}" fill="#68736c" font-size="11">${task[0]}</text><text x="${x+165}" y="${y+45}" text-anchor="middle" fill="#2f7771" font-size="24" font-weight="800">${task[1]}</text><path d="M${x+18} ${y+49} H${x+118}" stroke="#d9d7cf" stroke-dasharray="4 4"/></g>`;}).join('')}
+      <text x="380" y="264" text-anchor="middle" fill="#68736c" font-size="12">先把 6 弦与 5 弦练成锚点，再逐步扩展到其他琴弦</text>
+    </svg>`;
+  }
+
   function renderLessonDiagram(type) {
     const fixed = {'guitar-anatomy': anatomyDiagram, 'posture': postureDiagram, 'fret-pressure': pressureDiagram, 'pick-motion': pickDiagram, 'spider-grid': spiderDiagram, 'chord-reading': chordReadingDiagram};
     if (fixed[type]) return fixed[type]();
@@ -378,6 +421,7 @@
     if (['anchor-change','lead-finger','small-chords','chord-loop','change-test'].includes(type)) return processDiagram(type);
     if (['beat-bar','meter-bpm','quarter-strum','eighth-strum','rest-strum','pop-strum'].includes(type)) return rhythmLessonDiagram(type);
     if (['pitch-vibration','note-dual-names','chromatic-wheel','semitone-whole','natural-neighbors','solfege-systems'].includes(type)) return pitchLessonDiagram(type);
+    if (['tuning-strings','sixth-string-cycle','fifth-string-cycle','fret-semitone-grid','same-note-positions','fret-hunt-test'].includes(type)) return fretboardTheoryDiagram(type);
     return anatomyDiagram();
   }
 

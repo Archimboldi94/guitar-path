@@ -1,7 +1,7 @@
 /* 单页应用控制器：负责路由、课程渲染与互动实验室。 */
 (function () {
   const course = window.CourseData;
-  const lessons = [...window.StageOneLessons, ...window.StageTwoLessons, ...window.StageThreeLessons, ...window.StageFourLessons, ...window.StageFiveLessons];
+  const lessons = [...window.StageOneLessons, ...window.StageTwoLessons, ...window.StageThreeLessons, ...window.StageFourLessons, ...window.StageFiveLessons, ...window.StageSixLessons];
   const ui = window.GuitarComponents;
   const main = document.getElementById('main-content');
   const breadcrumb = document.getElementById('breadcrumb');
@@ -105,9 +105,9 @@
       </section>
 
       <section class="home-section">
-        <div class="home-section-heading"><div><div class="eyebrow">从这里选择</div><h2>五个阶段，先建立真正能用的基础</h2></div><a href="#/course">查看完整课程路线 →</a></div>
+        <div class="home-section-heading"><div><div class="eyebrow">从这里选择</div><h2>六个阶段，先建立真正能用的基础</h2></div><a href="#/course">查看完整课程路线 →</a></div>
         <div class="home-stage-grid">
-          ${course.stages.slice(0,5).map((stage,index) => `<a class="home-stage-card stage-tone-${index + 1}" href="#/lesson/${stage.id}-1">
+          ${course.stages.slice(0,6).map((stage,index) => `<a class="home-stage-card stage-tone-${index + 1}" href="#/lesson/${stage.id}-1">
             <div class="home-stage-top"><span>阶段 ${String(stage.id).padStart(2,'0')}</span><b>${stage.tone}</b></div>
             <h3>${stage.title}</h3>
             <p>${stage.short}</p>
@@ -139,7 +139,7 @@
 
   function stageDetail(stageId) {
     const stage = course.stages.find(item => item.id === Number(stageId)) || course.stages[0];
-    const available = stage.id <= 5;
+    const available = stage.id <= 6;
     const availableLessons = stageLessons(stage.id);
     const firstInStage = availableLessons[0];
     return `<div class="card stage-detail" id="stage-detail">
@@ -164,9 +164,9 @@
     main.innerHTML = `<div class="page">
       ${pageIntro('Course map','完整课程路线','120 节课被组织为 24 个阶段。顺序不是按术语难度排列，而是按“先能在琴上体验，再解释为什么”排列。')}
       <section class="available-course section">
-        <div class="section-heading"><div><div class="eyebrow">Available now</div><h2>已上线 · 前 5 个完整阶段</h2></div><span class="tag">29 节课可立即学习</span></div>
-        <div class="stage-jump-nav">${course.stages.slice(0,5).map(stage => `<button data-jump-stage="${stage.id}">阶段 ${stage.id} · ${stage.tone}</button>`).join('')}</div>
-        ${course.stages.slice(0,5).map(stage => `<div class="available-stage-group" id="available-stage-${stage.id}"><h3>第 ${stage.id} 阶段 · ${stage.title}</h3><div class="available-course-grid">${stageLessons(stage.id).map(lesson => {
+        <div class="section-heading"><div><div class="eyebrow">Available now</div><h2>已上线 · 前 6 个完整阶段</h2></div><span class="tag">35 节课可立即学习</span></div>
+        <div class="stage-jump-nav">${course.stages.slice(0,6).map(stage => `<button data-jump-stage="${stage.id}">阶段 ${stage.id} · ${stage.tone}</button>`).join('')}</div>
+        ${course.stages.slice(0,6).map(stage => `<div class="available-stage-group" id="available-stage-${stage.id}"><h3>第 ${stage.id} 阶段 · ${stage.title}</h3><div class="available-course-grid">${stageLessons(stage.id).map(lesson => {
           return `<a class="available-lesson-card" href="#/lesson/${lesson.id}"><span class="available-number">${String(lesson.number).padStart(2,'0')}</span><span><small>第 ${lesson.number} 课 · ${lesson.duration} 分钟</small><strong>${lesson.title}</strong></span><b>进入 →</b></a>`;
         }).join('')}</div></div>`).join('')}
       </section>
@@ -248,10 +248,37 @@
     </section>`;
   }
 
+  function fretboardDemoCard(lesson) {
+    const demo = lesson.fretboardDemo;
+    if (!demo) return '';
+    const frets = demo.frets || Array.from({length: 13}, (_, index) => index);
+    const noteLabel = midi => {
+      const note = ui.noteFromMidi(midi);
+      return demo.showFlats && ui.flatNames[note] ? `${note}/${ui.flatNames[note]}` : note;
+    };
+    return `<section class="lesson-section fretboard-demo-section">
+      <div class="fretboard-demo-heading"><div><div class="eyebrow">可点击指板</div><h2>${demo.title}</h2><p>${demo.hint}</p></div><button class="secondary-button compact" type="button" data-toggle-fret-notes>${demo.startHidden ? '显示全部音名' : '隐藏音名练记忆'}</button></div>
+      <div class="lesson-fretboard" data-notes-hidden="${demo.startHidden ? 'true' : 'false'}">
+        <div class="lesson-fret-scroll"><div class="lesson-fret-grid" style="--lesson-fret-count:${frets.length}">
+          ${demo.strings.map(stringNumber => {
+            const openMidi = ui.openMidi[stringNumber - 1];
+            return `<div class="lesson-fret-row"><div class="lesson-string-label"><strong>${stringNumber} 弦</strong><small>${ui.noteFromMidi(openMidi)} 空弦</small></div>${frets.map(fret => {
+              const midi = openMidi + fret;
+              const label = noteLabel(midi);
+              const highlighted = !demo.highlight || demo.highlight.includes(ui.noteFromMidi(midi));
+              return `<button class="lesson-fret-note ${highlighted ? 'highlighted' : 'dimmed'}" type="button" data-fret-demo-note data-midi="${midi}" data-note="${label}" aria-label="${stringNumber} 弦 ${fret} 品 ${label}"><small>${fret === 0 ? '空弦' : `${fret} 品`}</small><b>${demo.startHidden ? '?' : label}</b></button>`;
+            }).join('')}</div>`;
+          }).join('')}
+        </div></div>
+      </div>
+      <p class="audio-hint">点任意一格可以听声音；隐藏音名后，先在心里回答，再点格子揭晓。</p>
+    </section>`;
+  }
+
   function renderLesson(id) {
     const lesson = lessons.find(item => item.id === id);
     if (!lesson) {
-      main.innerHTML = `<div class="page narrow"><div class="empty-state"><h2>这节课仍在编写中</h2><p>完整位置已经放入课程路线。当前可完整学习前 5 个阶段的 29 节课。</p><a class="primary-button" href="#/course">返回课程目录</a></div></div>`;
+      main.innerHTML = `<div class="page narrow"><div class="empty-state"><h2>这节课仍在编写中</h2><p>完整位置已经放入课程路线。当前可完整学习前 6 个阶段的 35 节课。</p><a class="primary-button" href="#/course">返回课程目录</a></div></div>`;
       return;
     }
     const lessonIndex = lessons.findIndex(item => item.id === lesson.id);
@@ -273,6 +300,7 @@
       ${lessonChordGuide(lesson.id)}
       ${tabDemoCard(lesson)}
       ${earDemoCard(lesson)}
+      ${fretboardDemoCard(lesson)}
 
       <section class="lesson-section"><div class="eyebrow">核心概念</div><h2>给刚才的体验一个名字</h2><div class="concept-grid">${lesson.concepts.map(concept=>`<article class="concept-card"><h3>${concept.term}</h3><dl class="concept-lines"><dt>它是什么</dt><dd>${concept.plain}</dd><dt>为什么需要</dt><dd>${concept.why}</dd><dt>在吉他上</dt><dd>${concept.guitar}</dd></dl></article>`).join('')}</div></section>
 
@@ -345,6 +373,29 @@
           button.disabled = false;
           button.textContent = '▶ 连续播放';
         }, notes.length * 460 + 450);
+      }));
+    }
+    const fretboard = document.querySelector('.lesson-fretboard');
+    const fretToggle = document.querySelector('[data-toggle-fret-notes]');
+    if (fretboard && fretToggle) {
+      const fretButtons = [...fretboard.querySelectorAll('[data-fret-demo-note]')];
+      fretToggle.addEventListener('click', () => {
+        const hidden = fretboard.dataset.notesHidden !== 'true';
+        fretboard.dataset.notesHidden = String(hidden);
+        fretToggle.textContent = hidden ? '显示全部音名' : '隐藏音名练记忆';
+        fretButtons.forEach(button => {
+          button.classList.remove('revealed');
+          button.querySelector('b').textContent = hidden ? '?' : button.dataset.note;
+        });
+      });
+      fretButtons.forEach(button => button.addEventListener('click', () => {
+        ui.playTone(Number(button.dataset.midi), .82, .11);
+        button.classList.add('playing');
+        if (fretboard.dataset.notesHidden === 'true') {
+          button.classList.add('revealed');
+          button.querySelector('b').textContent = button.dataset.note;
+        }
+        setTimeout(() => button.isConnected && button.classList.remove('playing'), 620);
       }));
     }
     document.querySelectorAll('.quiz-card input').forEach(input => input.addEventListener('change', () => {
@@ -663,7 +714,7 @@
     rhythmPlayerReopen.className = 'rhythm-player-reopen';
     rhythmPlayerReopen.type = 'button';
     rhythmPlayerReopen.setAttribute('aria-label', '打开背景节奏播放器');
-    rhythmPlayerReopen.innerHTML = `<span>♩</span><b>${rhythmBpm} BPM</b>`;
+    rhythmPlayerReopen.innerHTML = `<span>♩</span><small>${rhythmBpm}</small>`;
     document.body.append(rhythmPlayer, rhythmPlayerReopen);
 
     document.getElementById('player-collapse').addEventListener('click', closeRhythmPlayer);
@@ -672,16 +723,19 @@
     document.getElementById('player-stop').addEventListener('click', stopRhythm);
     document.getElementById('player-bpm-down').addEventListener('click', () => setRhythmBpm(rhythmBpm - 5));
     document.getElementById('player-bpm-up').addEventListener('click', () => setRhythmBpm(rhythmBpm + 5));
+    closeRhythmPlayer();
     syncRhythmUI();
   }
 
   function openRhythmPlayer() {
     rhythmPlayer.classList.add('open');
+    rhythmPlayer.setAttribute('aria-hidden', 'false');
     rhythmPlayerReopen.classList.remove('show');
   }
 
   function closeRhythmPlayer() {
     rhythmPlayer.classList.remove('open');
+    rhythmPlayer.setAttribute('aria-hidden', 'true');
     rhythmPlayerReopen.classList.add('show');
   }
 
@@ -708,7 +762,8 @@
       rhythmPlayer.classList.toggle('playing', Boolean(rhythmTimer));
     }
     if (rhythmPlayerReopen) {
-      rhythmPlayerReopen.querySelector('b').textContent = `${rhythmBpm} BPM`;
+      rhythmPlayerReopen.querySelector('small').textContent = rhythmBpm;
+      rhythmPlayerReopen.setAttribute('aria-label', `打开背景节奏播放器，当前 ${rhythmBpm} BPM`);
       rhythmPlayerReopen.classList.toggle('playing', Boolean(rhythmTimer));
     }
   }
@@ -729,7 +784,7 @@
       <div class="card section"><h3>怎样跟，而不是追</h3><ol><li>先听 2 小节，只让脚轻点地。</li><li>口数“1 & 2 & 3 & 4 &”，右手持续下上。</li><li>节奏型里的“·”表示不碰弦，但右手仍经过。</li><li>连续稳定 30 秒，再提高 3–5 BPM。</li></ol></div>
     </div>`;
     bindRhythmEvents();
-    openRhythmPlayer();
+    closeRhythmPlayer();
     syncRhythmUI();
   }
 
@@ -754,7 +809,6 @@
   }
 
   function startRhythm() {
-    openRhythmPlayer();
     const tick=()=>{
       const beats=document.querySelectorAll('.beat'),strums=document.querySelectorAll('.strum');
       const divisionsPerBeat=rhythmSubdivision===8?2:4;
@@ -833,15 +887,21 @@
       30: [['4 分钟','高低与音量辨别'],['8 分钟','本课十二音位置练习'],['7 分钟','音名与唱名对照'],['7 分钟','指板同弦数品'],['4 分钟','闭眼听辨与记录']],
       45: [['5 分钟','空弦、12品与振动热身'],['12 分钟','本课听觉实验'],['10 分钟','半音全音随机反应'],['8 分钟','十二音正逆序'],['6 分钟','前两课间隔复习'],['4 分钟','口述总结']],
       60: [['7 分钟','声音高低与同名八度热身'],['15 分钟','本课音名和指板位置'],['12 分钟','十二音与升降号练习'],['10 分钟','唱名跟唱与移调对照'],['9 分钟','第五阶段旧课随机复习'],['7 分钟','听辨、自测与记录']]
+    },
+    6: {
+      20: [['3 分钟','六根空弦音名热身'],['7 分钟','六弦或五弦 0–12 品寻音'],['6 分钟','隐藏音名随机揭晓'],['4 分钟','口述一个指板循环规律']],
+      30: [['4 分钟','标准调弦顺序与试听'],['8 分钟','六弦十二音正逆序'],['7 分钟','五弦十二音正逆序'],['7 分钟','同音跨弦寻找'],['4 分钟','记录最慢的三个位置']],
+      45: [['5 分钟','空弦与 12 品同名热身'],['12 分钟','六弦和五弦锚点定位'],['10 分钟','半音逐品移动'],['8 分钟','随机指定音寻位'],['6 分钟','指板实验室核对'],['4 分钟','闭眼口述循环']],
+      60: [['7 分钟','六根空弦与八度热身'],['15 分钟','两根低音弦完整十二音'],['12 分钟','六根弦同音位置'],['10 分钟','隐藏音名限时寻音'],['9 分钟','第六阶段综合测试'],['7 分钟','错位复盘与放松']]
     }
   };
 
   function renderPractice(minutes=30, stageNumber=1) {
-    const stage = Math.min(5, Math.max(1, Number(stageNumber)));
+    const stage = Math.min(6, Math.max(1, Number(stageNumber)));
     const stageFirstLesson = stageLessons(stage)[0];
     const plan=practicePlansByStage[stage][minutes];
     breadcrumb.textContent='今日练习';
-    main.innerHTML=`<div class="page narrow">${pageIntro('Daily practice','今天练什么','先选择你正在学的阶段，再选择今天实际拥有的时间。这里不判断进度，只给你一份可立即照做的练习单。')}<div class="card section"><span class="tag">选择练习重点</span><h2 style="margin-top:12px">第 ${stage} 阶段 · ${stageInfo(stage).title}</h2><div class="practice-time-picker">${[1,2,3,4,5].map(n=>`<button class="time-button ${n===stage?'active':''}" data-practice-stage="${n}">阶段 ${n}</button>`).join('')}</div><p class="muted" style="margin-top:18px">再选择今天的练习时长，不需要为了“完整”勉强练满一小时。</p><div class="practice-time-picker">${[20,30,45,60].map(n=>`<button class="time-button ${n===Number(minutes)?'active':''}" data-minutes="${n}">${n} 分钟</button>`).join('')}</div></div><section class="section"><div class="section-heading"><h2>${minutes} 分钟方案</h2><span class="tag">合计 ${minutes} 分钟</span></div><div class="daily-plan">${plan.map((item,i)=>`<label class="plan-item"><span class="plan-time">${item[0]}</span><span><strong>${item[1]}</strong><small class="muted">${i===plan.length-1?'结束前放松双手，不带着紧张离开。':'完成质量优先，不追求速度。'}</small></span><input type="checkbox"></label>`).join('')}</div></section><div class="lesson-footer"><a class="secondary-button" href="#/lesson/${stageFirstLesson.id}">打开本阶段第 1 课</a><button class="primary-button" id="finish-practice">完成今日练习</button></div></div>`;
+    main.innerHTML=`<div class="page narrow">${pageIntro('Daily practice','今天练什么','先选择你正在学的阶段，再选择今天实际拥有的时间。这里不判断进度，只给你一份可立即照做的练习单。')}<div class="card section"><span class="tag">选择练习重点</span><h2 style="margin-top:12px">第 ${stage} 阶段 · ${stageInfo(stage).title}</h2><div class="practice-time-picker">${[1,2,3,4,5,6].map(n=>`<button class="time-button ${n===stage?'active':''}" data-practice-stage="${n}">阶段 ${n}</button>`).join('')}</div><p class="muted" style="margin-top:18px">再选择今天的练习时长，不需要为了“完整”勉强练满一小时。</p><div class="practice-time-picker">${[20,30,45,60].map(n=>`<button class="time-button ${n===Number(minutes)?'active':''}" data-minutes="${n}">${n} 分钟</button>`).join('')}</div></div><section class="section"><div class="section-heading"><h2>${minutes} 分钟方案</h2><span class="tag">合计 ${minutes} 分钟</span></div><div class="daily-plan">${plan.map((item,i)=>`<label class="plan-item"><span class="plan-time">${item[0]}</span><span><strong>${item[1]}</strong><small class="muted">${i===plan.length-1?'结束前放松双手，不带着紧张离开。':'完成质量优先，不追求速度。'}</small></span><input type="checkbox"></label>`).join('')}</div></section><div class="lesson-footer"><a class="secondary-button" href="#/lesson/${stageFirstLesson.id}">打开本阶段第 1 课</a><button class="primary-button" id="finish-practice">完成今日练习</button></div></div>`;
     document.querySelectorAll('[data-minutes]').forEach(button=>button.addEventListener('click',()=>renderPractice(Number(button.dataset.minutes),stage)));
     document.querySelectorAll('[data-practice-stage]').forEach(button=>button.addEventListener('click',()=>renderPractice(Number(minutes),Number(button.dataset.practiceStage))));
     document.getElementById('finish-practice').addEventListener('click',()=>showToast('今天的练习已完成。停在质量好的地方。'));
@@ -865,6 +925,7 @@
   function navigate() {
     const [route,param] = routeParts();
     if (route !== 'tuner') stopTuner(false);
+    closeRhythmPlayer();
     document.body.classList.remove('nav-open');
     setActiveNav(route==='lesson'?'course':route);
     ({home:renderHome,course:renderCourse,lesson:()=>renderLesson(param),fretboard:renderFretboard,chords:renderChords,rhythm:renderRhythm,tuner:renderTuner,map:renderMap,practice:()=>renderPractice(),glossary:renderGlossary}[route] || renderNotFound)();
