@@ -29,7 +29,8 @@
       energy += centered * centered;
     }
     const volume = Math.sqrt(energy / length);
-    if (volume < .008) return null;
+    // 手机与 iPad 距离木吉他稍远时输入会很弱；降低门槛后仍由 YIN 清晰度过滤环境噪声。
+    if (volume < .0025) return null;
 
     const minimumLag = Math.max(2, Math.floor(sampleRate / maxFrequency));
     const maximumLag = Math.min(Math.ceil(sampleRate / minFrequency), Math.floor(length / 2));

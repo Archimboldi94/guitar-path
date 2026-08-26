@@ -17,6 +17,8 @@
   let tunerAudioContext = null;
   let tunerSource = null;
   let tunerAnalyser = null;
+  let tunerSilentGain = null;
+  let tunerTrack = null;
   let tunerFrame = null;
   let tunerTarget = 'auto';
   let tunerReferenceMidi = null;
@@ -564,6 +566,10 @@
           <div class="tuner-target-label" id="tuner-target-label">自动识别琴弦</div>
           <div class="tuner-note"><strong id="tuner-note">—</strong><span id="tuner-octave"></span></div>
           <div class="tuner-detected" id="tuner-detected">等待开始</div>
+          <div class="tuner-input-meter" id="tuner-input-meter" data-level="none">
+            <div class="tuner-input-track"><span id="tuner-input-bar"></span></div>
+            <div class="tuner-input-copy"><span>麦克风输入强度</span><strong id="tuner-input-label">未开启</strong></div>
+          </div>
           <div class="tuner-meter" aria-label="音高偏差表，左侧偏低，右侧偏高">
             <div class="tuner-meter-track"><i id="tuner-needle"></i><b></b></div>
             <div class="tuner-meter-labels"><span>−50</span><span>偏低</span><strong>准</strong><span>偏高</span><span>+50</span></div>
@@ -588,7 +594,7 @@
           </section>
           <section class="card tuner-help-card">
             <h3>怎样调得更准</h3>
-            <ol><li>把手机或 iPad 放在音孔前方约 20–40 厘米。</li><li>一次只拨一根空弦，等前一个声音停下再拨下一次。</li><li>显示“偏低”时慢慢拧紧；显示“偏高”时慢慢放松。</li><li>指针进入中间绿色区域并稳定两三次，就可以停下。</li></ol>
+            <ol><li>开启后先轻敲一下琴身，确认“麦克风输入强度”会变化。</li><li>把手机或 iPad 放在音孔前方约 10–25 厘米，一次只拨一根空弦。</li><li>显示“偏低”时慢慢拧紧；显示“偏高”时慢慢放松。</li><li>指针进入中间绿色区域并稳定两三次，就可以停下。</li></ol>
             <div class="tuner-privacy"><span>●</span><div><strong>声音只在设备里分析</strong><small>网页不会录音、保存或上传。离开本页时麦克风会自动关闭。</small></div></div>
           </section>
         </aside>
@@ -635,7 +641,7 @@
       if (tunerAudioContext.state === 'suspended') await tunerAudioContext.resume();
       tunerStream = await navigator.mediaDevices.getUserMedia({
         video: false,
-        audio: { echoCancellation: { ideal: false }, noiseSuppression: { ideal: false }, autoGainControl: { ideal: false }, channelCount: { ideal: 1 } }
+        audio: { echoCancellation: { ideal: false }, noiseSuppression: { ideal: false }, autoGainControl: { ideal: true }, channelCount: { ideal: 1 } }
       });
       // 用户可能在权限提示期间离开调音页，此时立即释放刚取得的麦克风。
       if (!toggle.isConnected || routeParts()[0] !== 'tuner') {
@@ -648,11 +654,22 @@
       tunerAnalyser.smoothingTimeConstant = 0;
       tunerBuffer = new Float32Array(tunerAnalyser.fftSize);
       tunerSource.connect(tunerAnalyser);
+      // 部分 Safari/WebKit 只有在分析节点接入输出图时才会持续拉取数据；零音量连接不会产生回授声。
+      tunerSilentGain = tunerAudioContext.createGain();
+      tunerSilentGain.gain.value = 0;
+      tunerAnalyser.connect(tunerSilentGain).connect(tunerAudioContext.destination);
+      tunerTrack = tunerStream.getAudioTracks()[0] || null;
+      if (!tunerTrack) throw new DOMException('没有可用的音频轨道', 'NotFoundError');
+      tunerTrack.addEventListener('mute', showTunerMuted);
+      tunerTrack.addEventListener('ended', showTunerEnded);
+      if (tunerAudioContext.state === 'suspended') await tunerAudioContext.resume();
       tunerHistory = [];
       tunerMisses = 0;
+      tunerLastAnalysis = 0;
       toggle.disabled = false;
       toggle.textContent = '■ 关闭麦克风';
       setTunerMessage('listening', '麦克风已开启，正在听', `拨响 ${tunerTarget === 'auto' ? '任意一根空弦' : `${standardTuning.find(item => item.midi === Number(tunerTarget)).string} 弦空弦`}`);
+      updateTunerInputLevel(0);
       tunerFrame = requestAnimationFrame(analyseTuner);
     } catch (error) {
       stopTuner(false);
@@ -674,11 +691,19 @@
     tunerFrame = requestAnimationFrame(analyseTuner);
     if (timestamp - tunerLastAnalysis < 85) return;
     tunerLastAnalysis = timestamp;
+    if (tunerTrack?.muted) {
+      updateTunerInputLevel(0);
+      return;
+    }
     tunerAnalyser.getFloatTimeDomainData(tunerBuffer);
-    const pitch = ui.detectPitch(tunerBuffer, tunerAudioContext.sampleRate);
+    let energy = 0;
+    for (let index = 0; index < tunerBuffer.length; index += 1) energy += tunerBuffer[index] * tunerBuffer[index];
+    const inputVolume = Math.sqrt(energy / tunerBuffer.length);
+    updateTunerInputLevel(inputVolume);
+    const pitch = ui.detectPitch(tunerBuffer, tunerAudioContext.sampleRate, 60, 380);
     if (!pitch || pitch.clarity < .62) {
       tunerMisses += 1;
-      if (tunerMisses > 5) showTunerWaiting();
+      if (tunerMisses > 2) showTunerWaiting(inputVolume);
       return;
     }
     tunerMisses = 0;
@@ -714,15 +739,49 @@
     document.querySelectorAll('[data-tuner-target]').forEach(button => button.classList.toggle('detected', tunerTarget === 'auto' && Number(button.dataset.tunerTarget) === target.midi));
   }
 
-  function showTunerWaiting() {
+  function updateTunerInputLevel(volume) {
+    const bar = document.getElementById('tuner-input-bar');
+    const label = document.getElementById('tuner-input-label');
+    const meter = document.getElementById('tuner-input-meter');
+    if (!bar || !label || !meter) return;
+    const decibels = volume > 0 ? 20 * Math.log10(volume) : -80;
+    const percent = Math.max(0, Math.min(100, (decibels + 60) * 2.5));
+    const level = volume < .0007 ? 'none' : volume < .0025 ? 'weak' : volume < .012 ? 'heard' : 'strong';
+    const labels = { none:'等待声音', weak:'声音偏弱', heard:'已收到声音', strong:'声音清楚' };
+    bar.style.width = `${percent}%`;
+    label.textContent = labels[level];
+    meter.dataset.level = level;
+  }
+
+  function showTunerWaiting(inputVolume = 0) {
     if (!tunerStream) return;
     document.getElementById('tuner-stage').dataset.state = 'listening';
-    document.getElementById('tuner-status').textContent = '麦克风已开启，正在听';
-    document.getElementById('tuner-detected').textContent = '还没有听到稳定的琴弦声';
+    const heard = inputVolume >= .0025;
+    const weak = inputVolume >= .0007;
+    document.getElementById('tuner-status').textContent = heard ? '收到声音，正在判断' : weak ? '麦克风输入声音偏弱' : '麦克风已开启，等待声音';
+    document.getElementById('tuner-detected').textContent = heard ? '听到了，但音高还不够稳定' : weak ? '已经收到一点声音' : '还没有收到明显的琴弦声';
     document.getElementById('tuner-frequency').textContent = '— Hz';
-    document.getElementById('tuner-cents').textContent = '请再拨一次';
-    document.getElementById('tuner-guidance').textContent = '一次只拨一根空弦，并让它持续发声';
+    document.getElementById('tuner-cents').textContent = heard ? '继续让弦振动' : '请再拨一次';
+    document.getElementById('tuner-guidance').textContent = heard ? '只拨一根空弦，等声音稳定下来' : weak ? '把设备靠近音孔，再用力拨一次' : '轻敲琴身测试；强度条不动时请检查系统麦克风';
     document.getElementById('tuner-needle').style.transform = 'translateX(-50%) rotate(0deg)';
+  }
+
+  function showTunerMuted() {
+    if (!tunerStream || !document.getElementById('tuner-stage')) return;
+    updateTunerInputLevel(0);
+    setTunerMessage('error', '麦克风暂时没有输入', '请确认浏览器没有被静音，并回到本页再试一次。');
+  }
+
+  function showTunerEnded() {
+    if (!tunerStream || !document.getElementById('tuner-stage')) return;
+    stopTuner(false);
+    const toggle = document.getElementById('tuner-toggle');
+    if (toggle) {
+      toggle.disabled = false;
+      toggle.textContent = '◎ 重新开启麦克风';
+    }
+    setTunerMessage('error', '麦克风连接已中断', '请重新开启麦克风。');
+    updateTunerInputLevel(0);
   }
 
   function setTunerMessage(state, status, guidance) {
@@ -737,11 +796,19 @@
     if (tunerFrame) cancelAnimationFrame(tunerFrame);
     tunerFrame = null;
     if (tunerSource) tunerSource.disconnect();
+    if (tunerAnalyser) tunerAnalyser.disconnect();
+    if (tunerSilentGain) tunerSilentGain.disconnect();
+    if (tunerTrack) {
+      tunerTrack.removeEventListener('mute', showTunerMuted);
+      tunerTrack.removeEventListener('ended', showTunerEnded);
+    }
     if (tunerStream) tunerStream.getTracks().forEach(track => track.stop());
     if (tunerAudioContext && tunerAudioContext.state !== 'closed') tunerAudioContext.close().catch(() => {});
     tunerStream = null;
     tunerSource = null;
     tunerAnalyser = null;
+    tunerSilentGain = null;
+    tunerTrack = null;
     tunerAudioContext = null;
     tunerBuffer = null;
     tunerHistory = [];
@@ -752,6 +819,8 @@
     document.getElementById('tuner-toggle').textContent = '◎ 开启麦克风';
     document.getElementById('tuner-guidance').textContent = '需要时可以重新开启';
     document.getElementById('tuner-detected').textContent = '未在收音';
+    updateTunerInputLevel(0);
+    document.getElementById('tuner-input-label').textContent = '未开启';
   }
 
   const rhythmPatterns = {
@@ -1022,6 +1091,10 @@
   document.getElementById('mobile-overlay').addEventListener('click',()=>document.body.classList.remove('nav-open'));
   document.getElementById('focus-button').addEventListener('click',()=>{document.body.classList.toggle('focus-mode');showToast(document.body.classList.contains('focus-mode')?'已进入专注阅读，按 Esc 退出':'已退出专注阅读');});
   document.addEventListener('keydown',event=>{if(event.key==='Escape'){document.body.classList.remove('focus-mode','nav-open');}});
+  // iPad 从权限提示或后台回到网页时可能暂停音频上下文，重新激活后继续收音。
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && tunerStream && tunerAudioContext?.state === 'suspended') tunerAudioContext.resume().catch(() => {});
+  });
   window.addEventListener('hashchange',navigate);
   window.addEventListener('beforeunload',()=>{stopRhythm();stopTuner(false);});
   initRhythmPlayer();

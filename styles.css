@@ -371,6 +371,13 @@ select, input[type="number"] { min-height: 42px; padding: 8px 34px 8px 11px; bor
 .tuner-note strong { font-size: 116px; font-weight: 500; }
 .tuner-note span { margin-top: 18px; color: #aec3b9; font-size: 26px; }
 .tuner-detected { min-height: 22px; color: #c3d4cc; font-size: 12px; }
+.tuner-input-meter { width: min(100%, 420px); margin: 7px auto 0; }
+.tuner-input-track { height: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,.12); border-radius: 99px; background: rgba(255,255,255,.08); }
+.tuner-input-track span { display: block; width: 0; height: 100%; border-radius: inherit; background: #789789; transition: width .12s ease, background .18s ease; }
+.tuner-input-meter[data-level="weak"] .tuner-input-track span { background: #d89b55; }
+.tuner-input-meter[data-level="heard"] .tuner-input-track span, .tuner-input-meter[data-level="strong"] .tuner-input-track span { background: #82c7a7; }
+.tuner-input-copy { display: flex; justify-content: space-between; gap: 12px; margin-top: 5px; color: #8da99c; font-size: 9px; }
+.tuner-input-copy strong { color: #c7d8d0; }
 .tuner-meter { width: min(100%, 520px); margin: 20px auto 0; }
 .tuner-meter-track { position: relative; height: 105px; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,.22); border-radius: 105px 105px 0 0; background: radial-gradient(circle at 50% 100%, rgba(255,255,255,.05) 0 29%, transparent 30%), repeating-conic-gradient(from 225deg at 50% 100%, rgba(255,255,255,.24) 0 .4deg, transparent .4deg 11.25deg); }
 .tuner-meter-track::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 46px; height: 78px; transform: translateX(-50%); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--tuner-accent) 20%, transparent), transparent); }
