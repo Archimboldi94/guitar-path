@@ -1140,6 +1140,26 @@
     window.scrollTo(0,0);
   }
 
+  const themeToggle = document.getElementById('theme-toggle');
+
+  function syncThemeToggle() {
+    const isDark = document.documentElement.dataset.theme === 'dark';
+    themeToggle.querySelector('span').textContent = isDark ? '☀' : '☾';
+    themeToggle.setAttribute('aria-label', isDark ? '切换到日间模式' : '切换到夜间模式');
+    themeToggle.title = isDark ? '切换到日间模式' : '切换到夜间模式';
+  }
+
+  themeToggle.addEventListener('click', () => {
+    const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    if (nextTheme === 'dark') document.documentElement.dataset.theme = 'dark';
+    else delete document.documentElement.dataset.theme;
+    try {
+      localStorage.setItem('guitar-path-theme', nextTheme);
+    } catch (error) {}
+    syncThemeToggle();
+    showToast(nextTheme === 'dark' ? '已切换到夜间模式' : '已切换到日间模式');
+  });
+
   document.getElementById('menu-button').addEventListener('click',()=>document.body.classList.add('nav-open'));
   document.getElementById('close-nav').addEventListener('click',()=>document.body.classList.remove('nav-open'));
   document.getElementById('mobile-overlay').addEventListener('click',()=>document.body.classList.remove('nav-open'));
@@ -1151,6 +1171,7 @@
   });
   window.addEventListener('hashchange',navigate);
   window.addEventListener('beforeunload',()=>{stopRhythm();stopTuner(false);});
+  syncThemeToggle();
   initRhythmPlayer();
   navigate();
 })();

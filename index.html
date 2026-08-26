@@ -6,7 +6,12 @@
   <meta name="description" content="面向成年零基础学习者的吉他与乐理互动教程">
   <title>弦上明白 · 零基础吉他与乐理自学教程</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20260826-2">
+  <script>
+    try {
+      if (localStorage.getItem('guitar-path-theme') === 'dark') document.documentElement.dataset.theme = 'dark';
+    } catch (error) {}
+  </script>
+  <link rel="stylesheet" href="styles.css?v=20260826-4">
 </head>
 <body>
   <a class="skip-link" href="#main-content">跳到正文</a>
@@ -41,6 +46,7 @@
         <button class="icon-button menu-button" id="menu-button" aria-label="打开菜单">☰</button>
         <div class="breadcrumb" id="breadcrumb">学习首页</div>
         <div class="top-actions">
+          <button class="theme-toggle" id="theme-toggle" type="button" aria-label="切换到夜间模式" title="切换到夜间模式"><span aria-hidden="true">☾</span></button>
           <button class="quiet-button" id="focus-button" title="切换专注阅读">专注阅读</button>
           <a class="primary-button compact" href="#/practice">开始练习</a>
         </div>
@@ -61,6 +67,6 @@
   <script src="data/lessons-stage8.js?v=20260826-2"></script>
   <script src="data/lessons-stage9.js?v=20260826-2"></script>
   <script src="js/components.js?v=20260826-3"></script>
-  <script src="js/app.js?v=20260826-3"></script>
+  <script src="js/app.js?v=20260826-4"></script>
 </body>
 </html>
