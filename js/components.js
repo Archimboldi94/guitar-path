@@ -539,6 +539,46 @@
     </svg>`;
   }
 
+  // 第九阶段用三种固定颜色表示根音、三音、五音，强化“结构相同、根音可变”的理解。
+  function triadTheoryDiagram(type) {
+    const root = '#d98f3b';
+    const third = '#8f5e96';
+    const fifth = '#2f7771';
+    const ink = '#25362e';
+    const muted = '#6c766f';
+    const note = (x,label,role,color) => `<g><circle cx="${x}" cy="125" r="38" fill="${color}"/><text x="${x}" y="121" text-anchor="middle" fill="white" font-size="22" font-weight="800">${label}</text><text x="${x}" y="143" text-anchor="middle" fill="white" font-size="9">${role}</text></g>`;
+    if (type === 'triad-root-center') {
+      return `<svg viewBox="0 0 760 285" role="img" aria-label="根音是和弦命名和距离中心">
+        <text x="380" y="30" text-anchor="middle" fill="${ink}" font-size="16" font-weight="800">先确定根音，三度与五度才有起点</text>
+        ${note(180,'C','根音 · 名字起点',root)}${note(380,'E','从 C 量三度',third)}${note(580,'G','从 C 量五度',fifth)}
+        <path d="M220 125 H338" stroke="#d9c7b4" stroke-width="3"/><path d="M422 125 H538" stroke="#d9c7b4" stroke-width="3"/>
+        <text x="280" y="108" text-anchor="middle" fill="${muted}" font-size="10">4 个半音</text><text x="480" y="108" text-anchor="middle" fill="${muted}" font-size="10">从根音共 7 个</text>
+        <rect x="155" y="205" width="450" height="43" rx="12" fill="#f7efe3" stroke="#e3c7a4"/><text x="380" y="231" text-anchor="middle" fill="${ink}" font-size="12">C 是“姓”，E 与 G 的身份都以 C 为参照</text>
+      </svg>`;
+    }
+    if (type === 'major-triad-formula' || type === 'minor-triad-formula') {
+      const minor = type === 'minor-triad-formula';
+      const middle = minor ? '小三度' : '大三度';
+      const semitones = minor ? 3 : 4;
+      return `<svg viewBox="0 0 760 300" role="img" aria-label="${minor?'小':'大'}三和弦半音配方">
+        <text x="380" y="30" text-anchor="middle" fill="${ink}" font-size="16" font-weight="800">${minor?'小':'大'}三和弦 = 0 + ${semitones} + 7</text>
+        ${note(155,'0','根音',root)}${note(380,String(semitones),middle,third)}${note(605,'7','纯五度',fifth)}
+        <path d="M196 125 H338" stroke="#d9c7b4" stroke-width="3"/><path d="M422 125 H563" stroke="#d9c7b4" stroke-width="3"/>
+        <text x="267" y="108" text-anchor="middle" fill="${muted}" font-size="10">从根音向上 ${semitones} 个半音</text><text x="493" y="108" text-anchor="middle" fill="${muted}" font-size="10">从根音向上 7 个半音</text>
+        <rect x="118" y="205" width="524" height="48" rx="12" fill="${minor?'#f3edf5':'#fbf1df'}" stroke="${minor?'#cdb8d2':'#e2c28f'}"/>
+        <text x="380" y="225" text-anchor="middle" fill="${ink}" font-size="11">${minor?'与大三和弦相比：只把三音从 4 移到 3':'换任何根音都保留 0、4、7，手型可以不同'}</text><text x="380" y="242" text-anchor="middle" fill="${muted}" font-size="9">所有数字都从根音重新起算</text>
+      </svg>`;
+    }
+    const stringNotes = [['×','6'],['C','5'],['E','4'],['G','3'],['C','2'],['E','1']];
+    return `<svg viewBox="0 0 760 300" role="img" aria-label="开放 C 和弦六根弦组成音拆解">
+      <text x="380" y="29" text-anchor="middle" fill="${ink}" font-size="16" font-weight="800">开放 C：五根弦发声，三类组成音</text>
+      ${stringNotes.map((item,index)=>{const x=104+index*110;const color=item[0]==='C'?root:item[0]==='E'?third:item[0]==='G'?fifth:'#c8ccc9';return `<g><circle cx="${x}" cy="112" r="32" fill="${color}"/><text x="${x}" y="108" text-anchor="middle" fill="${item[0]==='×'?muted:'white'}" font-size="20" font-weight="800">${item[0]}</text><text x="${x}" y="128" text-anchor="middle" fill="${item[0]==='×'?muted:'white'}" font-size="9">${item[1]} 弦</text></g>`;}).join('')}
+      <path d="M160 180 H600" stroke="#d7d4cd" stroke-width="2" stroke-dasharray="5 6"/>
+      ${note(215,'C','根音',root).replaceAll('cy="125"','cy="225"').replaceAll('y="121"','y="221"').replaceAll('y="143"','y="243"')}${note(380,'E','大三度',third).replaceAll('cy="125"','cy="225"').replaceAll('y="121"','y="221"').replaceAll('y="143"','y="243"')}${note(545,'G','纯五度',fifth).replaceAll('cy="125"','cy="225"').replaceAll('y="121"','y="221"').replaceAll('y="143"','y="243"')}
+      <text x="380" y="286" text-anchor="middle" fill="${muted}" font-size="10">合并重复的 C 与 E，得到 C · E · G</text>
+    </svg>`;
+  }
+
   function renderLessonDiagram(type) {
     const fixed = {'guitar-anatomy': anatomyDiagram, 'posture': postureDiagram, 'fret-pressure': pressureDiagram, 'pick-motion': pickDiagram, 'spider-grid': spiderDiagram, 'chord-reading': chordReadingDiagram};
     if (fixed[type]) return fixed[type]();
@@ -550,6 +590,7 @@
     if (['tuning-strings','sixth-string-cycle','fifth-string-cycle','fret-semitone-grid','same-note-positions','fret-hunt-test'].includes(type)) return fretboardTheoryDiagram(type);
     if (['interval-listen-first','interval-degrees','thirds-compare','fourth-fifth','interval-shapes','interval-ear-check'].includes(type)) return intervalTheoryDiagram(type);
     if (['scale-stair-listen','c-major-natural','major-step-formula','c-major-fretboard','g-major-derive','d-major-derive'].includes(type)) return scaleTheoryDiagram(type);
+    if (['triad-root-center','major-triad-formula','minor-triad-formula','open-chord-anatomy'].includes(type)) return triadTheoryDiagram(type);
     return anatomyDiagram();
   }
 

@@ -123,6 +123,7 @@ h3 { margin-bottom: 9px; font-size: 16px; }
 .stage-tone-6 { --stage-color: #2f7771; --stage-soft: #dfeeed; }
 .stage-tone-7 { --stage-color: #965568; --stage-soft: #f2e4e8; }
 .stage-tone-8 { --stage-color: #9a6a2f; --stage-soft: #f4eadb; }
+.stage-tone-9 { --stage-color: #7b5783; --stage-soft: #eee6f1; }
 .home-lab-section { padding: 38px; border-radius: 24px; background: var(--green); color: white; }
 .home-lab-section .eyebrow { color: #e4b66f; }
 .home-lab-section .home-section-heading > p { color: #b9cec4; }
@@ -358,6 +359,32 @@ select, input[type="number"] { min-height: 42px; padding: 8px 34px 8px 11px; bor
 .scale-gap.half em { color: white; background: #b06f5c; }
 .scale-run-note { margin: 9px 0 0; color: var(--muted); font-size: 11px; }
 
+.triad-demo-section > .muted { margin: -8px 0 18px; font-size: 13px; }
+.triad-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.triad-card { min-width: 0; padding: 20px; border: 1px solid rgba(80,102,90,.22); border-radius: 16px; background: #f7f4ee; }
+.triad-card-head { display: flex; justify-content: space-between; gap: 16px; align-items: start; }
+.triad-card-head span { color: #7b5783; font-size: 9px; font-weight: 800; letter-spacing: .08em; }
+.triad-card-head h3 { margin: 3px 0 0; color: var(--ink); font-family: Georgia, "Songti SC", serif; font-size: 28px; }
+.triad-card-head > strong { max-width: 160px; color: #7a644d; font-size: 10px; text-align: right; }
+.triad-note-row { display: flex; gap: 7px; align-items: center; margin-top: 17px; }
+.triad-note-row > i { color: #a79d91; font-style: normal; font-weight: 800; }
+.triad-note { display: grid; place-items: center; min-width: 0; height: 72px; flex: 1; padding: 7px; color: white; border: 0; border-radius: 13px; cursor: pointer; transition: transform .13s ease, filter .13s ease; }
+.triad-note:hover, .triad-note.playing { transform: translateY(-3px); filter: brightness(1.08); }
+.triad-note.root { background: #d98f3b; }
+.triad-note.third { background: #8f5e96; }
+.triad-note.fifth { background: #2f7771; }
+.triad-note b, .triad-note small { display: block; }
+.triad-note b { font-size: 20px; }
+.triad-note small { margin-top: 2px; color: rgba(255,255,255,.83); font-size: 8px; }
+.triad-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 15px; }
+.triad-actions button { flex: 1 1 105px; }
+.triad-string-anatomy { display: grid; grid-template-columns: auto repeat(6, minmax(28px,1fr)) auto; gap: 5px; align-items: center; margin-top: 15px; padding: 11px; border-radius: 11px; background: white; }
+.triad-string-anatomy > span { color: var(--muted); font-size: 8px; writing-mode: vertical-rl; }
+.triad-string-anatomy > b { display: grid; place-items: center; min-height: 41px; color: #315f4e; border-radius: 8px; background: #e2eee7; font-size: 12px; }
+.triad-string-anatomy > b.root-string { color: #7b4917; background: #f7d8ad; }
+.triad-string-anatomy > b.muted-string { color: #8d9690; background: #eceeeb; }
+.triad-string-anatomy small { display: block; color: inherit; font-size: 7px; font-weight: 500; }
+
 .tuner-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(310px, .8fr); gap: 22px; align-items: start; }
 .tuner-stage { --tuner-accent: #f1bd68; min-height: 650px; padding: 30px; overflow: hidden; color: white; border-radius: 22px; background: #173f31; box-shadow: 0 24px 60px rgba(10,25,19,.18); text-align: center; }
 .tuner-stage[data-state="tuned"] { --tuner-accent: #82c7a7; }
@@ -592,6 +619,12 @@ body.focus-mode .page.narrow { width: min(760px, calc(100% - 40px)); padding-top
   .scale-run-head { align-items: stretch; flex-direction: column; }
   .scale-run-head > div:last-child { justify-content: stretch; }
   .scale-run-head button { flex: 1; }
+  .triad-card-grid { grid-template-columns: 1fr; }
+  .triad-card-head { flex-direction: column; }
+  .triad-card-head > strong { max-width: none; text-align: left; }
+  .triad-note-row { gap: 4px; }
+  .triad-note { height: 68px; }
+  .triad-string-anatomy { gap: 3px; padding: 8px; }
   .lesson-fretboard { padding: 10px; }
   .tuner-stage { min-height: 590px; padding: 25px 16px; }
   .tuner-note strong { font-size: 96px; }

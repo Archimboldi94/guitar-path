@@ -1,7 +1,7 @@
 /* 单页应用控制器：负责路由、课程渲染与互动实验室。 */
 (function () {
   const course = window.CourseData;
-  const lessons = [...window.StageOneLessons, ...window.StageTwoLessons, ...window.StageThreeLessons, ...window.StageFourLessons, ...window.StageFiveLessons, ...window.StageSixLessons, ...window.StageSevenLessons, ...window.StageEightLessons];
+  const lessons = [...window.StageOneLessons, ...window.StageTwoLessons, ...window.StageThreeLessons, ...window.StageFourLessons, ...window.StageFiveLessons, ...window.StageSixLessons, ...window.StageSevenLessons, ...window.StageEightLessons, ...window.StageNineLessons];
   const ui = window.GuitarComponents;
   const main = document.getElementById('main-content');
   const breadcrumb = document.getElementById('breadcrumb');
@@ -107,9 +107,9 @@
       </section>
 
       <section class="home-section">
-        <div class="home-section-heading"><div><div class="eyebrow">从这里选择</div><h2>八个阶段，先建立真正能用的基础</h2></div><a href="#/course">查看完整课程路线 →</a></div>
+        <div class="home-section-heading"><div><div class="eyebrow">从这里选择</div><h2>九个阶段，从基本动作走到看懂和弦</h2></div><a href="#/course">查看完整课程路线 →</a></div>
         <div class="home-stage-grid">
-          ${course.stages.slice(0,8).map((stage,index) => `<a class="home-stage-card stage-tone-${index + 1}" href="#/lesson/${stage.id}-1">
+          ${course.stages.slice(0,9).map((stage,index) => `<a class="home-stage-card stage-tone-${index + 1}" href="#/lesson/${stage.id}-1">
             <div class="home-stage-top"><span>阶段 ${String(stage.id).padStart(2,'0')}</span><b>${stage.tone}</b></div>
             <h3>${stage.title}</h3>
             <p>${stage.short}</p>
@@ -141,7 +141,7 @@
 
   function stageDetail(stageId) {
     const stage = course.stages.find(item => item.id === Number(stageId)) || course.stages[0];
-    const available = stage.id <= 8;
+    const available = stage.id <= 9;
     const availableLessons = stageLessons(stage.id);
     const firstInStage = availableLessons[0];
     return `<div class="card stage-detail" id="stage-detail">
@@ -166,9 +166,9 @@
     main.innerHTML = `<div class="page">
       ${pageIntro('Course map','完整课程路线','120 节课被组织为 24 个阶段。顺序不是按术语难度排列，而是按“先能在琴上体验，再解释为什么”排列。')}
       <section class="available-course section">
-        <div class="section-heading"><div><div class="eyebrow">Available now</div><h2>已上线 · 前 8 个完整阶段</h2></div><span class="tag">47 节课可立即学习</span></div>
-        <div class="stage-jump-nav">${course.stages.slice(0,8).map(stage => `<button data-jump-stage="${stage.id}">阶段 ${stage.id} · ${stage.tone}</button>`).join('')}</div>
-        ${course.stages.slice(0,8).map(stage => `<div class="available-stage-group" id="available-stage-${stage.id}"><h3>第 ${stage.id} 阶段 · ${stage.title}</h3><div class="available-course-grid">${stageLessons(stage.id).map(lesson => {
+        <div class="section-heading"><div><div class="eyebrow">Available now</div><h2>已上线 · 前 9 个完整阶段</h2></div><span class="tag">51 节课可立即学习</span></div>
+        <div class="stage-jump-nav">${course.stages.slice(0,9).map(stage => `<button data-jump-stage="${stage.id}">阶段 ${stage.id} · ${stage.tone}</button>`).join('')}</div>
+        ${course.stages.slice(0,9).map(stage => `<div class="available-stage-group" id="available-stage-${stage.id}"><h3>第 ${stage.id} 阶段 · ${stage.title}</h3><div class="available-course-grid">${stageLessons(stage.id).map(lesson => {
           return `<a class="available-lesson-card" href="#/lesson/${lesson.id}"><span class="available-number">${String(lesson.number).padStart(2,'0')}</span><span><small>第 ${lesson.number} 课 · ${lesson.duration} 分钟</small><strong>${lesson.title}</strong></span><b>进入 →</b></a>`;
         }).join('')}</div></div>`).join('')}
       </section>
@@ -198,7 +198,8 @@
     '2-3': ['Em','G'],
     '2-4': ['D','Dm','A'],
     '2-5': ['E','Em','C','G','D'],
-    '2-6': ['C','D','Dm','E','Em','G','A','Am']
+    '2-6': ['C','D','Dm','E','Em','G','A','Am'],
+    '9-4': ['C','G','Am','Em','Dm']
   };
 
   function chordStartString(name) {
@@ -306,10 +307,28 @@
     </section>`;
   }
 
+  // 三和弦实验把根音、三音、五音与开放弦实际发声放在同一张可听卡片里。
+  function triadDemoCard(lesson) {
+    const demo = lesson.triadDemo;
+    if (!demo) return '';
+    return `<section class="lesson-section triad-demo-section">
+      <div class="eyebrow">和弦组成实验</div><h2>${demo.title}</h2><p class="muted">${demo.hint}</p>
+      <div class="triad-card-grid">${demo.triads.map((triad,triadIndex) => {
+        const chord = ui.chordData[triad.name];
+        return `<article class="triad-card">
+          <div class="triad-card-head"><div><span>${triad.kind}</span><h3>${triad.name}</h3></div><strong>${triad.formula}</strong></div>
+          <div class="triad-note-row">${triad.notes.map((note,noteIndex) => `<button type="button" class="triad-note ${noteIndex === 0 ? 'root' : noteIndex === 1 ? 'third' : 'fifth'}" data-play-triad-note="${triadIndex}-${noteIndex}" aria-label="试听 ${note[0]}"><b>${note[0]}</b><small>${note[2]}</small></button>`).join('<i>+</i>')}</div>
+          ${demo.showStrings && chord ? `<div class="triad-string-anatomy"><span>6弦</span>${chord.sounded.map((note,index) => `<b class="${note === 'X' ? 'muted-string' : chord.roots.includes(index) ? 'root-string' : ''}">${note}<small>${6-index}</small></b>`).join('')}<span>1弦</span></div>` : ''}
+          <div class="triad-actions"><button class="secondary-button compact" type="button" data-play-triad="${triadIndex}-arp">▶ 分开听</button><button class="secondary-button compact" type="button" data-play-triad="${triadIndex}-stack">▶ 三音一起</button>${chord ? `<button class="secondary-button compact" type="button" data-play-triad-chord="${triad.name}">▶ 开放和弦</button>` : ''}</div>
+        </article>`;
+      }).join('')}</div>
+    </section>`;
+  }
+
   function renderLesson(id) {
     const lesson = lessons.find(item => item.id === id);
     if (!lesson) {
-      main.innerHTML = `<div class="page narrow"><div class="empty-state"><h2>这节课仍在编写中</h2><p>完整位置已经放入课程路线。当前可完整学习前 8 个阶段的 47 节课。</p><a class="primary-button" href="#/course">返回课程目录</a></div></div>`;
+      main.innerHTML = `<div class="page narrow"><div class="empty-state"><h2>这节课仍在编写中</h2><p>完整位置已经放入课程路线。当前可完整学习前 9 个阶段的 51 节课。</p><a class="primary-button" href="#/course">返回课程目录</a></div></div>`;
       return;
     }
     const lessonIndex = lessons.findIndex(item => item.id === lesson.id);
@@ -333,6 +352,7 @@
       ${earDemoCard(lesson)}
       ${intervalDemoCard(lesson)}
       ${scaleDemoCard(lesson)}
+      ${triadDemoCard(lesson)}
       ${fretboardDemoCard(lesson)}
 
       <section class="lesson-section"><div class="eyebrow">核心概念</div><h2>给刚才的体验一个名字</h2><div class="concept-grid">${lesson.concepts.map(concept=>`<article class="concept-card"><h3>${concept.term}</h3><dl class="concept-lines"><dt>它是什么</dt><dd>${concept.plain}</dd><dt>为什么需要</dt><dd>${concept.why}</dd><dt>在吉他上</dt><dd>${concept.guitar}</dd></dl></article>`).join('')}</div></section>
@@ -448,6 +468,38 @@
           button.textContent = originalText;
           noteButtons.forEach(noteButton => noteButton.classList.remove('playing'));
         }, sequence.length * 420 + 300);
+      }));
+    }
+    if (lesson.triadDemo) {
+      document.querySelectorAll('[data-play-triad-note]').forEach(button => button.addEventListener('click', () => {
+        const [triadIndex,noteIndex] = button.dataset.playTriadNote.split('-').map(Number);
+        ui.playTone(lesson.triadDemo.triads[triadIndex].notes[noteIndex][1], .88, .115);
+        button.classList.add('playing');
+        setTimeout(() => button.isConnected && button.classList.remove('playing'), 650);
+      }));
+      document.querySelectorAll('[data-play-triad]').forEach(button => button.addEventListener('click', () => {
+        const [triadIndex,mode] = button.dataset.playTriad.split('-');
+        const triad = lesson.triadDemo.triads[Number(triadIndex)];
+        triad.notes.forEach((note,index) => ui.playTone(note[1], 1.15, .095, mode === 'arp' ? index * .36 : 0));
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = '♪ 播放中';
+        setTimeout(() => {
+          if (!button.isConnected) return;
+          button.disabled = false;
+          button.textContent = originalText;
+        }, mode === 'arp' ? 1300 : 850);
+      }));
+      document.querySelectorAll('[data-play-triad-chord]').forEach(button => button.addEventListener('click', () => {
+        ui.playChord(button.dataset.playTriadChord);
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = '♪ 开放和弦播放中';
+        setTimeout(() => {
+          if (!button.isConnected) return;
+          button.disabled = false;
+          button.textContent = originalText;
+        }, 1450);
       }));
     }
     const fretboard = document.querySelector('.lesson-fretboard');
