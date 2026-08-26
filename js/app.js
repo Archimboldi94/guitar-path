@@ -753,7 +753,9 @@
     const inputVolume = Math.sqrt(energy / tunerBuffer.length);
     updateTunerInputLevel(inputVolume);
     const pitch = ui.detectPitch(tunerBuffer, tunerAudioContext.sampleRate, 60, 380);
-    if (!pitch || pitch.clarity < .62) {
+    // 弱输入的波形清晰度天然较低；分级门槛能听见轻拨，同时仍过滤没有周期性的环境底噪。
+    const minimumClarity = inputVolume < .001 ? .44 : inputVolume < .004 ? .5 : .56;
+    if (!pitch || pitch.clarity < minimumClarity) {
       tunerMisses += 1;
       if (tunerMisses > 2) showTunerWaiting(inputVolume);
       return;
@@ -797,8 +799,8 @@
     const meter = document.getElementById('tuner-input-meter');
     if (!bar || !label || !meter) return;
     const decibels = volume > 0 ? 20 * Math.log10(volume) : -80;
-    const percent = Math.max(0, Math.min(100, (decibels + 60) * 2.5));
-    const level = volume < .0007 ? 'none' : volume < .0025 ? 'weak' : volume < .012 ? 'heard' : 'strong';
+    const percent = Math.max(0, Math.min(100, (decibels + 72) * 2));
+    const level = volume < .00018 ? 'none' : volume < .0007 ? 'weak' : volume < .006 ? 'heard' : 'strong';
     const labels = { none:'等待声音', weak:'声音偏弱', heard:'已收到声音', strong:'声音清楚' };
     bar.style.width = `${percent}%`;
     label.textContent = labels[level];
@@ -808,13 +810,13 @@
   function showTunerWaiting(inputVolume = 0) {
     if (!tunerStream) return;
     document.getElementById('tuner-stage').dataset.state = 'listening';
-    const heard = inputVolume >= .0025;
-    const weak = inputVolume >= .0007;
+    const heard = inputVolume >= .0007;
+    const weak = inputVolume >= .00018;
     document.getElementById('tuner-status').textContent = heard ? '收到声音，正在判断' : weak ? '麦克风输入声音偏弱' : '麦克风已开启，等待声音';
     document.getElementById('tuner-detected').textContent = heard ? '听到了，但音高还不够稳定' : weak ? '已经收到一点声音' : '还没有收到明显的琴弦声';
     document.getElementById('tuner-frequency').textContent = '— Hz';
     document.getElementById('tuner-cents').textContent = heard ? '继续让弦振动' : '请再拨一次';
-    document.getElementById('tuner-guidance').textContent = heard ? '只拨一根空弦，等声音稳定下来' : weak ? '把设备靠近音孔，再用力拨一次' : '轻敲琴身测试；强度条不动时请检查系统麦克风';
+    document.getElementById('tuner-guidance').textContent = heard ? '只拨一根空弦，等声音稳定下来' : weak ? '已经听见了，把设备靠近音孔后轻拨一次' : '轻敲琴身测试；强度条不动时请检查系统麦克风';
     document.getElementById('tuner-needle').style.transform = 'translateX(-50%) rotate(0deg)';
   }
 

@@ -29,8 +29,8 @@
       energy += centered * centered;
     }
     const volume = Math.sqrt(energy / length);
-    // 手机与 iPad 距离木吉他稍远时输入会很弱；降低门槛后仍由 YIN 清晰度过滤环境噪声。
-    if (volume < .0025) return null;
+    // 手机与 iPad 的麦克风电平差异很大；这里只拦截接近底噪的信号，是否像琴弦声再交给清晰度判断。
+    if (volume < .0002) return null;
 
     const minimumLag = Math.max(2, Math.floor(sampleRate / maxFrequency));
     const maximumLag = Math.min(Math.ceil(sampleRate / minFrequency), Math.floor(length / 2));
@@ -53,14 +53,14 @@
 
     let bestLag = -1;
     for (let lag = minimumLag; lag < maximumLag; lag += 1) {
-      if (difference[lag] < .17) {
+      if (difference[lag] < .22) {
         while (lag + 1 <= maximumLag && difference[lag + 1] < difference[lag]) lag += 1;
         bestLag = lag;
         break;
       }
     }
     if (bestLag < 0) {
-      let bestValue = .38;
+      let bestValue = .54;
       for (let lag = minimumLag; lag <= maximumLag; lag += 1) {
         if (difference[lag] < bestValue) {
           bestValue = difference[lag];
