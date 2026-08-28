@@ -31,6 +31,9 @@
   let tunerCandidateFrames = 0;
   let tunerLastValidAt = 0;
   let tunerDisplayedCents = null;
+  let tunerStableState = 'listening';
+  let tunerNoiseFloor = .00012;
+  let tunerNoiseSamples = 0;
 
   const standardTuning = [
     { string: 6, midi: 40, note: 'E2', frequency: 82.41 },
@@ -665,24 +668,33 @@
     tunerReferenceMidi = null;
     breadcrumb.textContent = '琴弦调音器';
     main.innerHTML = `<div class="page">
-      ${pageIntro('Tuner lab','琴弦调音器','拨响一根空弦，调音器会通过麦克风判断它偏高还是偏低。默认自动识别，也可以先指定琴弦，减少环境声音造成的误判。')}
+      ${pageIntro('Tuner lab','琴弦调音器','一次只拨一根空弦。想要最稳的结果，可以先选择琴弦。')}
       <div class="tuner-layout section">
         <section class="tuner-stage" id="tuner-stage" data-state="idle" data-has-reading="false">
           <div class="tuner-stage-top">
             <div class="tuner-listening" role="status" aria-live="polite"><span class="tuner-mic-dot"></span><strong id="tuner-status">麦克风尚未开启</strong></div>
-            <div class="tuner-mode-pill"><strong id="tuner-target-label">自动识别琴弦</strong><small>标准调弦</small></div>
+            <div class="tuner-mode-pill"><strong id="tuner-target-label">自动识别</strong><small>标准调弦 · 440 Hz</small></div>
           </div>
           <div class="tuner-note-card">
             <div class="tuner-note"><strong id="tuner-note">—</strong><span id="tuner-octave"></span></div>
             <div class="tuner-detected" id="tuner-detected">等待开始</div>
           </div>
           <div class="tuner-meter" aria-label="音高偏差表，左侧偏低，右侧偏高">
-            <div class="tuner-meter-track"><span class="tuner-good-zone"></span><i id="tuner-needle"></i><b></b></div>
+            <div class="tuner-meter-track"><span class="tuner-good-zone"></span><i id="tuner-needle"></i></div>
             <div class="tuner-meter-labels"><span>−50</span><span>−25</span><strong>0</strong><span>+25</span><span>+50</span></div>
           </div>
-          <div class="tuner-direction"><span>偏低 · 拧紧</span><strong>标准音高</strong><span>偏高 · 放松</span></div>
+          <div class="tuner-direction"><span>偏低 · 拧紧</span><strong>准</strong><span>偏高 · 放松</span></div>
           <div class="tuner-reading"><strong id="tuner-cents">等待拨弦</strong><span id="tuner-frequency">— Hz</span></div>
           <h2 id="tuner-guidance">先开启麦克风，再拨响一根空弦</h2>
+
+          <div class="tuner-picker">
+            <div class="tuner-picker-head"><strong>选择琴弦</strong><span>选定后识别更稳定</span></div>
+            <div class="tuner-strings">
+              <button class="active tuner-auto" data-tuner-target="auto" type="button"><strong>自动</strong><small>任意空弦</small></button>
+              ${standardTuning.map(item => `<button class="tuner-string-option" data-tuner-target="${item.midi}" type="button"><strong>${item.note}</strong><span>${item.string}弦</span></button>`).join('')}
+            </div>
+          </div>
+
           <div class="tuner-actions">
             <button class="primary-button" id="tuner-toggle" type="button">◎ 开启麦克风</button>
             <button class="secondary-button" id="tuner-reference" type="button" disabled>▶ 听目标音</button>
@@ -691,25 +703,8 @@
             <div class="tuner-input-copy"><span>麦克风输入</span><strong id="tuner-input-label">未开启</strong></div>
             <div class="tuner-input-track"><span id="tuner-input-bar"></span></div>
           </div>
+          <div class="tuner-privacy"><span>●</span><div><strong>声音只在本机分析</strong><small>不会录音或上传；离开本页自动关闭麦克风。</small></div></div>
         </section>
-
-        <aside class="tuner-side">
-          <section class="card tuner-string-card">
-            <div class="eyebrow">标准调弦 E A D G B E</div>
-            <h2>选择要调的琴弦</h2>
-            <p>环境较安静时用自动识别；周围有人说话或有音乐时，先点具体琴弦会更稳定。</p>
-            <div class="tuner-strings">
-              <button class="active tuner-auto" data-tuner-target="auto" type="button"><span><strong>自动识别</strong><small>推荐</small></span><b>任意空弦</b></button>
-              <div class="tuner-headstock-face" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-              ${standardTuning.map(item => `<button class="tuner-string-option tuner-string-${item.string}" data-tuner-target="${item.midi}" type="button"><strong>${item.note}</strong><span>${item.string} 弦</span><small>${item.frequency.toFixed(1)} Hz</small></button>`).join('')}
-            </div>
-          </section>
-          <section class="card tuner-help-card">
-            <h3>怎样调得更准</h3>
-            <ol><li>开启后先轻敲一下琴身，确认“麦克风输入强度”会变化。</li><li>把手机或 iPad 放在音孔前方约 10–25 厘米，一次只拨一根空弦。</li><li>显示“偏低”时慢慢拧紧；显示“偏高”时慢慢放松。</li><li>指针进入中间绿色区域并稳定两三次，就可以停下。</li></ol>
-            <div class="tuner-privacy"><span>●</span><div><strong>声音只在设备里分析</strong><small>网页不会录音、保存或上传。离开本页时麦克风会自动关闭。</small></div></div>
-          </section>
-        </aside>
       </div>
     </div>`;
     bindTunerEvents();
@@ -727,14 +722,15 @@
       const target = tunerTarget === 'auto' ? null : standardTuning.find(item => item.midi === Number(tunerTarget));
       tunerReferenceMidi = target ? target.midi : null;
       document.getElementById('tuner-reference').disabled = !target;
-      document.getElementById('tuner-target-label').textContent = target ? `${target.string} 弦目标音` : '自动识别琴弦';
+      document.getElementById('tuner-target-label').textContent = target ? `${target.string} 弦 · ${target.note}` : '自动识别';
       document.getElementById('tuner-note').textContent = target ? target.note.slice(0, -1) : '—';
       document.getElementById('tuner-octave').textContent = target ? target.note.slice(-1) : '';
       document.getElementById('tuner-detected').textContent = target ? '已选定琴弦，等待拨弦' : '等待自动识别';
       document.getElementById('tuner-frequency').textContent = '— Hz';
       document.getElementById('tuner-cents').textContent = '等待拨弦';
       document.getElementById('tuner-guidance').textContent = tunerStream ? `拨响 ${target ? `${target.string} 弦空弦` : '任意一根空弦'}` : '先开启麦克风，再拨响一根空弦';
-      document.getElementById('tuner-needle').style.transform = 'translateX(-50%) rotate(0deg)';
+      document.getElementById('tuner-needle').style.left = '50%';
+      document.getElementById('tuner-needle').style.transform = 'translateX(-50%)';
       document.getElementById('tuner-stage').dataset.hasReading = 'false';
       resetTunerStability(target ? target.midi : null);
     }));
@@ -748,6 +744,9 @@
     tunerCandidateFrames = 0;
     tunerLastValidAt = 0;
     tunerDisplayedCents = null;
+    tunerStableState = 'listening';
+    tunerNoiseFloor = .00012;
+    tunerNoiseSamples = 0;
   }
 
   async function startTuner() {
@@ -768,7 +767,7 @@
       if (tunerAudioContext.state === 'suspended') await tunerAudioContext.resume();
       tunerStream = await navigator.mediaDevices.getUserMedia({
         video: false,
-        audio: { echoCancellation: { ideal: false }, noiseSuppression: { ideal: false }, autoGainControl: { ideal: true }, channelCount: { ideal: 1 } }
+        audio: { echoCancellation: { ideal: false }, noiseSuppression: { ideal: false }, autoGainControl: { ideal: false }, channelCount: { ideal: 1 } }
       });
       // 用户可能在权限提示期间离开调音页，此时立即释放刚取得的麦克风。
       if (!toggle.isConnected || routeParts()[0] !== 'tuner') {
@@ -777,7 +776,8 @@
       }
       tunerSource = tunerAudioContext.createMediaStreamSource(tunerStream);
       tunerAnalyser = tunerAudioContext.createAnalyser();
-      tunerAnalyser.fftSize = 4096;
+      // 读取 8192 点，再由检测器使用其中约 140 毫秒；低音 E2 会比原来的短窗口稳定。
+      tunerAnalyser.fftSize = 8192;
       tunerAnalyser.smoothingTimeConstant = 0;
       tunerBuffer = new Float32Array(tunerAnalyser.fftSize);
       tunerSource.connect(tunerAnalyser);
@@ -815,7 +815,7 @@
   function analyseTuner(timestamp) {
     if (!tunerAnalyser || !tunerAudioContext) return;
     tunerFrame = requestAnimationFrame(analyseTuner);
-    if (timestamp - tunerLastAnalysis < 85) return;
+    if (timestamp - tunerLastAnalysis < 105) return;
     tunerLastAnalysis = timestamp;
     if (tunerTrack?.muted) {
       updateTunerInputLevel(0);
@@ -826,9 +826,16 @@
     for (let index = 0; index < tunerBuffer.length; index += 1) energy += tunerBuffer[index] * tunerBuffer[index];
     const inputVolume = Math.sqrt(energy / tunerBuffer.length);
     updateTunerInputLevel(inputVolume);
-    const pitch = ui.detectPitch(tunerBuffer, tunerAudioContext.sampleRate, 60, 380);
-    // 弱输入的波形清晰度天然较低；分级门槛能听见轻拨，同时仍过滤没有周期性的环境底噪。
-    const minimumClarity = inputVolume < .001 ? .44 : inputVolume < .004 ? .5 : .56;
+    if (tunerNoiseSamples < 14) {
+      // 校准值设置上限，避免用户一开启就拨弦时把琴声误当成持续底噪。
+      tunerNoiseFloor = (tunerNoiseFloor * tunerNoiseSamples + Math.min(inputVolume, .00045)) / (tunerNoiseSamples + 1);
+      tunerNoiseSamples += 1;
+    }
+    const minimumSignal = Math.max(.00008, tunerNoiseFloor * 1.55);
+    // 上限覆盖 1 弦 E4 的二次泛音；随后会折回基音，避免泛音强时直接丢失结果。
+    const pitch = inputVolume >= minimumSignal ? ui.detectPitch(tunerBuffer, tunerAudioContext.sampleRate, 60, 700) : null;
+    // 音量只负责区分底噪，最终仍由周期清晰度判断是不是琴弦声。
+    const minimumClarity = inputVolume < .001 ? .52 : inputVolume < .004 ? .57 : .61;
     if (!pitch || pitch.clarity < minimumClarity) {
       tunerMisses += 1;
       tunerCandidateMidi = null;
@@ -837,14 +844,27 @@
       return;
     }
     tunerMisses = 0;
+    const selectedTarget = tunerTarget === 'auto' ? null : standardTuning.find(item => item.midi === Number(tunerTarget));
+    pitch.frequency = ui.normalizeGuitarFrequency(pitch.frequency, standardTuning.map(item => item.frequency), selectedTarget?.frequency);
+    const refinedPitch = ui.refinePitchNear(tunerBuffer, tunerAudioContext.sampleRate, pitch.frequency);
+    if (refinedPitch && refinedPitch.clarity >= .5) pitch.frequency = refinedPitch.frequency;
     if (tunerHistory.length) {
       const previous = tunerHistory[Math.floor(tunerHistory.length / 2)];
       if (Math.abs(1200 * Math.log2(pitch.frequency / previous)) > 90) tunerHistory = [];
     }
     tunerHistory.push(pitch.frequency);
-    if (tunerHistory.length > 7) tunerHistory.shift();
+    if (tunerHistory.length > 9) tunerHistory.shift();
+    // 至少连续收到三个接近的结果再更新界面，避免拨弦瞬间的敲击声带着指针乱跳。
+    if (tunerHistory.length < 3) {
+      document.getElementById('tuner-status').textContent = '正在确认音高';
+      return;
+    }
     const sorted = [...tunerHistory].sort((a, b) => a - b);
-    updateTunerReading(sorted[Math.floor(sorted.length / 2)]);
+    const middle = Math.floor(sorted.length / 2);
+    const stableFrequency = sorted.length >= 5
+      ? sorted.slice(1, -1).reduce((sum, value) => sum + Math.log(value), 0) / (sorted.length - 2)
+      : Math.log(sorted[middle]);
+    updateTunerReading(Math.exp(stableFrequency));
   }
 
   function updateTunerReading(frequency) {
@@ -861,7 +881,7 @@
           tunerCandidateMidi = target.midi;
           tunerCandidateFrames = 1;
         }
-        const confirmations = tunerLockedTargetMidi === null ? 2 : 4;
+        const confirmations = tunerLockedTargetMidi === null ? 3 : 6;
         if (tunerCandidateFrames < confirmations) {
           document.getElementById('tuner-status').textContent = tunerLockedTargetMidi === null ? '正在确认琴弦' : '正在确认新的琴弦';
           return;
@@ -877,21 +897,25 @@
     tunerDisplayedCents = tunerDisplayedCents === null ? rawCents : tunerDisplayedCents * .56 + rawCents * .44;
     const cents = tunerDisplayedCents;
     const absoluteCents = Math.abs(cents);
-    const state = absoluteCents <= 5 ? 'tuned' : cents < 0 ? 'flat' : 'sharp';
-    const guidance = absoluteCents <= 5 ? '准了，保持这个位置' : cents < 0 ? '偏低：慢慢拧紧一点' : '偏高：慢慢放松一点';
+    // 加入迟滞：进入“准”要更严格，已经准了以后允许轻微抖动，颜色不会来回闪。
+    const tunedLimit = tunerStableState === 'tuned' ? 7 : 4;
+    const state = absoluteCents <= tunedLimit ? 'tuned' : cents < 0 ? 'flat' : 'sharp';
+    tunerStableState = state;
+    const guidance = state === 'tuned' ? '准了，保持这个位置' : cents < 0 ? '偏低：慢慢拧紧一点' : '偏高：慢慢放松一点';
     tunerReferenceMidi = target.midi;
     tunerLastValidAt = performance.now();
     document.getElementById('tuner-stage').dataset.state = state;
     document.getElementById('tuner-stage').dataset.hasReading = 'true';
-    document.getElementById('tuner-status').textContent = '读数已稳定';
-    document.getElementById('tuner-target-label').textContent = `${target.string} 弦目标音`;
+    document.getElementById('tuner-status').textContent = '读数稳定';
+    document.getElementById('tuner-target-label').textContent = `${target.string} 弦 · ${target.note}`;
     document.getElementById('tuner-note').textContent = target.note.slice(0, -1);
     document.getElementById('tuner-octave').textContent = target.note.slice(-1);
     document.getElementById('tuner-detected').textContent = `检测到 ${detectedName}`;
     document.getElementById('tuner-frequency').textContent = `${frequency.toFixed(1)} Hz`;
     document.getElementById('tuner-cents').textContent = `${cents > 0 ? '+' : ''}${Math.round(cents)} 音分`;
     document.getElementById('tuner-guidance').textContent = guidance;
-    document.getElementById('tuner-needle').style.transform = `translateX(-50%) rotate(${Math.max(-50, Math.min(50, cents)) * .9}deg)`;
+    document.getElementById('tuner-needle').style.left = `${50 + Math.max(-50, Math.min(50, cents))}%`;
+    document.getElementById('tuner-needle').style.transform = 'translateX(-50%)';
     document.getElementById('tuner-reference').disabled = false;
     document.querySelectorAll('[data-tuner-target]').forEach(button => button.classList.toggle('detected', tunerTarget === 'auto' && Number(button.dataset.tunerTarget) === target.midi));
   }
@@ -929,7 +953,8 @@
     document.getElementById('tuner-frequency').textContent = '— Hz';
     document.getElementById('tuner-cents').textContent = heard ? '继续让弦振动' : '请再拨一次';
     document.getElementById('tuner-guidance').textContent = heard ? '只拨一根空弦，等声音稳定下来' : weak ? '已经听见了，把设备靠近音孔后轻拨一次' : '轻敲琴身测试；强度条不动时请检查系统麦克风';
-    document.getElementById('tuner-needle').style.transform = 'translateX(-50%) rotate(0deg)';
+    document.getElementById('tuner-needle').style.left = '50%';
+    document.getElementById('tuner-needle').style.transform = 'translateX(-50%)';
   }
 
   function showTunerMuted() {
@@ -987,7 +1012,8 @@
     document.getElementById('tuner-detected').textContent = '未在收音';
     document.getElementById('tuner-frequency').textContent = '— Hz';
     document.getElementById('tuner-cents').textContent = '等待拨弦';
-    document.getElementById('tuner-needle').style.transform = 'translateX(-50%) rotate(0deg)';
+    document.getElementById('tuner-needle').style.left = '50%';
+    document.getElementById('tuner-needle').style.transform = 'translateX(-50%)';
     updateTunerInputLevel(0);
     document.getElementById('tuner-input-label').textContent = '未开启';
   }

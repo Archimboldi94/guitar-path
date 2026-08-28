@@ -16,10 +16,62 @@
     return 440 * Math.pow(2, (midi - 69) / 12);
   }
 
+  // 当吉他的泛音强过基音时，把检测结果折回最接近的空弦频率。
+  function normalizeGuitarFrequency(frequency, tuningFrequencies, targetFrequency = null) {
+    if (!Number.isFinite(frequency) || !tuningFrequencies?.length) return frequency;
+    const candidates = [frequency, frequency / 2, frequency / 3, frequency * 2].filter(value => value >= 60 && value <= 390);
+    const score = value => targetFrequency
+      ? Math.abs(1200 * Math.log2(value / targetFrequency))
+      : tuningFrequencies.reduce((best, target) => Math.min(best, Math.abs(1200 * Math.log2(value / target))), Infinity);
+    return candidates.reduce((best, value) => score(value) + 12 < score(best) ? value : best, frequency);
+  }
+
+  // 在已找到的大致频率附近做一次归一化自相关，能把强泛音折回后残留的几音分误差再收紧。
+  function refinePitchNear(samples, sampleRate, approximateFrequency) {
+    if (!samples || !sampleRate || !Number.isFinite(approximateFrequency)) return null;
+    const length = Math.min(samples.length, 6144);
+    const minimumLag = Math.max(2, Math.floor(sampleRate / (approximateFrequency * 1.09)));
+    const maximumLag = Math.min(Math.ceil(sampleRate / (approximateFrequency * .91)), Math.floor(length / 2));
+    if (minimumLag >= maximumLag) return null;
+    let mean = 0;
+    for (let index = 0; index < length; index += 1) mean += samples[index];
+    mean /= length;
+    const correlations = new Float32Array(maximumLag + 1);
+    let bestLag = minimumLag;
+    let bestCorrelation = -1;
+    for (let lag = minimumLag; lag <= maximumLag; lag += 1) {
+      let product = 0;
+      let leftEnergy = 0;
+      let rightEnergy = 0;
+      const compareLength = length - lag;
+      for (let index = 0; index < compareLength; index += 1) {
+        const left = samples[index] - mean;
+        const right = samples[index + lag] - mean;
+        product += left * right;
+        leftEnergy += left * left;
+        rightEnergy += right * right;
+      }
+      const correlation = product / Math.sqrt(leftEnergy * rightEnergy || 1);
+      correlations[lag] = correlation;
+      if (correlation > bestCorrelation) {
+        bestCorrelation = correlation;
+        bestLag = lag;
+      }
+    }
+    if (bestCorrelation < .35) return null;
+    const left = correlations[bestLag - 1] || correlations[bestLag];
+    const center = correlations[bestLag];
+    const right = correlations[bestLag + 1] || correlations[bestLag];
+    const curve = left - 2 * center + right;
+    const refinedLag = curve ? bestLag + .5 * (left - right) / curve : bestLag;
+    return { frequency: sampleRate / refinedLag, clarity: Math.min(1, bestCorrelation) };
+  }
+
   // 使用 YIN 差分法从麦克风波形中估算基频，避免把较强的泛音误判成目标音。
   function detectPitch(samples, sampleRate, minFrequency = 70, maxFrequency = 380) {
     if (!samples || samples.length < 1024 || !sampleRate) return null;
-    const length = Math.min(samples.length, 4096);
+    // 约 140 毫秒的窗口能覆盖低音 E2 的多个完整周期，同时控制手机端计算量。
+    const length = Math.min(samples.length, 6144);
     let mean = 0;
     let energy = 0;
     for (let index = 0; index < length; index += 1) mean += samples[index];
@@ -30,7 +82,7 @@
     }
     const volume = Math.sqrt(energy / length);
     // 手机与 iPad 的麦克风电平差异很大；这里只拦截接近底噪的信号，是否像琴弦声再交给清晰度判断。
-    if (volume < .0002) return null;
+    if (volume < .00008) return null;
 
     const minimumLag = Math.max(2, Math.floor(sampleRate / maxFrequency));
     const maximumLag = Math.min(Math.ceil(sampleRate / minFrequency), Math.floor(length / 2));
@@ -53,14 +105,14 @@
 
     let bestLag = -1;
     for (let lag = minimumLag; lag < maximumLag; lag += 1) {
-      if (difference[lag] < .22) {
+      if (difference[lag] < .18) {
         while (lag + 1 <= maximumLag && difference[lag + 1] < difference[lag]) lag += 1;
         bestLag = lag;
         break;
       }
     }
     if (bestLag < 0) {
-      let bestValue = .54;
+      let bestValue = .48;
       for (let lag = minimumLag; lag <= maximumLag; lag += 1) {
         if (difference[lag] < bestValue) {
           bestValue = difference[lag];
@@ -730,5 +782,5 @@
     return `<div class="fretboard-wrap"><div class="fretboard">${rows}</div><div class="fret-numbers">${numbers}</div></div>`;
   }
 
-  window.GuitarComponents = { noteNames, flatNames, openMidi, chordData, chordSvg, chordPositions, playChord, playTabSequence, renderFretboard, renderLessonDiagram, playTone, playClick, escapeHtml, noteFromMidi, detectPitch };
+  window.GuitarComponents = { noteNames, flatNames, openMidi, chordData, chordSvg, chordPositions, playChord, playTabSequence, renderFretboard, renderLessonDiagram, playTone, playClick, escapeHtml, noteFromMidi, detectPitch, normalizeGuitarFrequency, refinePitchNear };
 })();
