@@ -579,6 +579,53 @@
     </svg>`;
   }
 
+  // 第十阶段把“调”画成围绕主音组织的关系，而不是一张需要死背的音名表。
+  function tonalityTheoryDiagram(type) {
+    const home = '#d98f3b';
+    const relation = '#2f7771';
+    const blue = '#4f7298';
+    const ink = '#25362e';
+    const muted = '#6c766f';
+    const note = (x,y,label,role,color = relation) => `<g><circle cx="${x}" cy="${y}" r="31" fill="${color}"/><text x="${x}" y="${y-1}" text-anchor="middle" fill="white" font-size="17" font-weight="800">${label}</text><text x="${x}" y="${y+15}" text-anchor="middle" fill="white" font-size="8">${role}</text></g>`;
+    if (type === 'tonic-home') {
+      return `<svg viewBox="0 0 760 300" role="img" aria-label="主音像音乐里的家">
+        <text x="380" y="30" text-anchor="middle" fill="${ink}" font-size="16" font-weight="800">其他音可以离开，主音提供稳定的回到点</text>
+        ${note(380,150,'C','主音 · 家',home)}${note(165,90,'D','经过音')}${note(595,90,'E','经过音')}${note(165,220,'G','经过音')}${note(595,220,'B','最想继续')}
+        <path d="M199 101 C260 110 305 124 341 140" fill="none" stroke="#9ab6aa" stroke-width="3" marker-end="url(#home-arrow)"/><path d="M561 101 C500 110 455 124 419 140" fill="none" stroke="#9ab6aa" stroke-width="3"/><path d="M199 209 C270 196 315 177 344 162" fill="none" stroke="#9ab6aa" stroke-width="3"/><path d="M561 209 C490 196 445 177 416 162" fill="none" stroke="#d3a35f" stroke-width="4"/>
+        <defs><marker id="home-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#9ab6aa"/></marker></defs>
+      </svg>`;
+    }
+    if (type === 'key-organizes') {
+      return `<svg viewBox="0 0 760 310" role="img" aria-label="调把主音音阶旋律和和弦组织成整体">
+        <text x="380" y="28" text-anchor="middle" fill="${ink}" font-size="16" font-weight="800">“调”不是一个孤立音，而是一整套围绕中心的关系</text>
+        ${note(380,158,'C','主音中心',home)}
+        <rect x="70" y="78" width="190" height="68" rx="15" fill="#e5f0ec" stroke="#9fc7b7"/><text x="165" y="105" text-anchor="middle" fill="${relation}" font-size="13" font-weight="800">音阶材料</text><text x="165" y="126" text-anchor="middle" fill="${muted}" font-size="10">C D E F G A B</text>
+        <rect x="500" y="78" width="190" height="68" rx="15" fill="#e8eef5" stroke="#adc0d6"/><text x="595" y="105" text-anchor="middle" fill="${blue}" font-size="13" font-weight="800">旋律走向</text><text x="595" y="126" text-anchor="middle" fill="${muted}" font-size="10">经过、停留、回到 C</text>
+        <rect x="70" y="210" width="190" height="68" rx="15" fill="#f4ecf5" stroke="#ccb6d0"/><text x="165" y="237" text-anchor="middle" fill="#80588a" font-size="13" font-weight="800">和弦关系</text><text x="165" y="258" text-anchor="middle" fill="${muted}" font-size="10">C 像家，G 推动回家</text>
+        <rect x="500" y="210" width="190" height="68" rx="15" fill="#fbf0df" stroke="#e3c18d"/><text x="595" y="237" text-anchor="middle" fill="#9a6429" font-size="13" font-weight="800">听觉重心</text><text x="595" y="258" text-anchor="middle" fill="${muted}" font-size="10">结束在 C 更完整</text>
+        <path d="M260 113 L345 145 M500 113 L415 145 M260 244 L345 174 M500 244 L415 174" stroke="#b8c3bd" stroke-width="3"/>
+      </svg>`;
+    }
+    if (type === 'keys-compare') {
+      const rows = [
+        ['C 大调',['C','D','E','F','G','A','B','C'],[]],
+        ['G 大调',['G','A','B','C','D','E','F#','G'],[6]],
+        ['D 大调',['D','E','F#','G','A','B','C#','D'],[2,6]]
+      ];
+      return `<svg viewBox="0 0 760 330" role="img" aria-label="C G D 三个大调音阶对比">
+        <text x="380" y="27" text-anchor="middle" fill="${ink}" font-size="16" font-weight="800">结构相同，主音不同，需要的升号也不同</text>
+        ${rows.map((row,rowIndex) => { const y = 86 + rowIndex * 91; return `<g><text x="95" y="${y+5}" text-anchor="end" fill="${rowIndex===0?home:relation}" font-size="12" font-weight="800">${row[0]}</text>${row[1].map((label,index) => { const x = 145 + index * 74; const changed = row[2].includes(index); const root = index === 0 || index === 7; return `<g><circle cx="${x}" cy="${y}" r="24" fill="${root?home:changed?blue:'#dfece7'}" stroke="${root?home:changed?blue:'#a9c8bb'}"/><text x="${x}" y="${y+4}" text-anchor="middle" fill="${root||changed?'white':ink}" font-size="11" font-weight="800">${label}</text></g>`; }).join('')}</g>`; }).join('')}
+        <text x="380" y="316" text-anchor="middle" fill="${muted}" font-size="10">橙色是各调主音；蓝色是为了保持大调结构而升高的音</text>
+      </svg>`;
+    }
+    const steps = [['1','听结束处','哪里像还没说完？'],['2','哼候选音','哪个音最像“家”？'],['3','在琴上找','先试 C、G、D'],['4','用上下文验证','旋律与和弦是否都支持？']];
+    return `<svg viewBox="0 0 760 300" role="img" aria-label="判断调性的四步听觉流程">
+      <text x="380" y="29" text-anchor="middle" fill="${ink}" font-size="16" font-weight="800">不要凭一个音下结论：收集四条听觉证据</text>
+      ${steps.map((step,index) => { const x = 107 + index * 182; return `<g><circle cx="${x}" cy="116" r="30" fill="${index===3?home:relation}"/><text x="${x}" y="121" text-anchor="middle" fill="white" font-size="17" font-weight="800">${step[0]}</text><text x="${x}" y="171" text-anchor="middle" fill="${ink}" font-size="12" font-weight="800">${step[1]}</text><text x="${x}" y="193" text-anchor="middle" fill="${muted}" font-size="9">${step[2]}</text>${index<3?`<path d="M140 116 H164" stroke="#b9c9c1" stroke-width="3"/><path d="M158 110 L168 116 L158 122" fill="none" stroke="#b9c9c1" stroke-width="3"/>`:''}</g>`; }).join('')}
+      <rect x="145" y="235" width="470" height="38" rx="11" fill="#f7efe3" stroke="#e1c39e"/><text x="380" y="259" text-anchor="middle" fill="${ink}" font-size="11">结束音是线索，不是唯一答案；主音要由整段关系共同确认</text>
+    </svg>`;
+  }
+
   function renderLessonDiagram(type) {
     const fixed = {'guitar-anatomy': anatomyDiagram, 'posture': postureDiagram, 'fret-pressure': pressureDiagram, 'pick-motion': pickDiagram, 'spider-grid': spiderDiagram, 'chord-reading': chordReadingDiagram};
     if (fixed[type]) return fixed[type]();
@@ -591,6 +638,7 @@
     if (['interval-listen-first','interval-degrees','thirds-compare','fourth-fifth','interval-shapes','interval-ear-check'].includes(type)) return intervalTheoryDiagram(type);
     if (['scale-stair-listen','c-major-natural','major-step-formula','c-major-fretboard','g-major-derive','d-major-derive'].includes(type)) return scaleTheoryDiagram(type);
     if (['triad-root-center','major-triad-formula','minor-triad-formula','open-chord-anatomy'].includes(type)) return triadTheoryDiagram(type);
+    if (['tonic-home','key-organizes','keys-compare','tonality-listen'].includes(type)) return tonalityTheoryDiagram(type);
     return anatomyDiagram();
   }
 

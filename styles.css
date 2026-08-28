@@ -146,6 +146,7 @@ h3 { margin-bottom: 9px; font-size: 16px; }
 .stage-tone-7 { --stage-color: #965568; --stage-soft: #f2e4e8; }
 .stage-tone-8 { --stage-color: #9a6a2f; --stage-soft: #f4eadb; }
 .stage-tone-9 { --stage-color: #7b5783; --stage-soft: #eee6f1; }
+.stage-tone-10 { --stage-color: #3e7188; --stage-soft: #e1edf1; }
 .home-lab-section { padding: 38px; border-radius: 24px; background: var(--green); color: white; }
 .home-lab-section .eyebrow { color: #e4b66f; }
 .home-lab-section .home-section-heading > p { color: #b9cec4; }
@@ -322,6 +323,25 @@ select, input[type="number"] { min-height: 42px; padding: 8px 34px 8px 11px; bor
 .ear-note-buttons span, .ear-note-buttons small { display: block; }
 .ear-note-buttons span { font-weight: 800; }
 .ear-note-buttons small { margin-top: 2px; color: var(--muted); font-size: 9px; }
+
+.tonality-demo-section > .muted { margin: -8px 0 18px; font-size: 13px; }
+.tonality-scene-grid { display: grid; gap: 13px; }
+.tonality-scene { padding: 20px; overflow: hidden; border: 1px solid rgba(45,102,126,.2); border-radius: 16px; background: #eff5f6; }
+.tonality-scene-head { display: flex; justify-content: space-between; gap: 14px; align-items: start; }
+.tonality-scene-head span { color: #3e7a8d; font-size: 9px; font-weight: 850; letter-spacing: .09em; text-transform: uppercase; }
+.tonality-scene-head h3 { margin: 3px 0 0; color: #244f5d; font-family: Georgia, "Songti SC", serif; font-size: 22px; }
+.tonality-scene-head > b { padding: 5px 9px; color: #356b5a; border-radius: 99px; background: #dcece6; font-size: 9px; }
+.tonality-scene > p { margin: 9px 0 16px; color: var(--muted); font-size: 12px; }
+.tonality-note-path { display: flex; align-items: center; min-width: 0; overflow-x: auto; padding: 3px 2px 11px; }
+.tonality-note-path > span { display: grid; place-items: center; width: 58px; height: 62px; flex: 0 0 58px; color: #285767; border: 1px solid rgba(45,102,126,.22); border-radius: 50%; background: rgba(255,255,255,.82); transition: transform .15s ease, color .15s ease, background .15s ease; }
+.tonality-note-path > span.home { color: #7b4b16; border-color: #d69b52; background: #f8dfb8; box-shadow: 0 0 0 5px rgba(216,143,66,.09); }
+.tonality-note-path > span.playing { color: white; border-color: #347d67; background: #347d67; transform: translateY(-4px) scale(1.03); }
+.tonality-note-path b, .tonality-note-path small { display: block; }
+.tonality-note-path b { font-size: 17px; }
+.tonality-note-path small { margin-top: 2px; color: inherit; font-size: 7px; }
+.tonality-note-path > i { width: 23px; flex: 0 0 23px; color: #82a0a8; font-style: normal; text-align: center; }
+.tonality-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.tonality-actions button.playing { color: white; border-color: var(--amber); background: var(--amber); }
 
 .fretboard-demo-heading { display: flex; justify-content: space-between; gap: 20px; align-items: end; margin-bottom: 18px; }
 .fretboard-demo-heading h2 { margin-bottom: 5px; }
@@ -550,7 +570,7 @@ input[type="range"] { width: 100%; accent-color: #e5b569; }
 .dependency { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 12px; }
 .dependency b { color: var(--green); }
 
-.practice-time-picker { display: flex; gap: 8px; margin: 22px 0; }
+.practice-time-picker { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0; }
 .time-button { min-width: 74px; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); cursor: pointer; }
 .time-button.active { color: white; background: var(--green); border-color: var(--green); }
 .daily-plan { display: grid; gap: 10px; }
@@ -601,6 +621,7 @@ body.focus-mode .page.narrow { width: min(760px, calc(100% - 40px)); padding-top
 :root[data-theme="dark"] .stage-tone-7 { --stage-color: #d38ba0; --stage-soft: #3e2930; }
 :root[data-theme="dark"] .stage-tone-8 { --stage-color: #d4a66d; --stage-soft: #3b3022; }
 :root[data-theme="dark"] .stage-tone-9 { --stage-color: #bf99c6; --stage-soft: #382d3b; }
+:root[data-theme="dark"] .stage-tone-10 { --stage-color: #8bbdd0; --stage-soft: #263c45; }
 :root[data-theme="dark"] .roadmap-node.locked,
 :root[data-theme="dark"] .memory-card.later,
 :root[data-theme="dark"] .sounding-strings .muted-string { color: #899b92; background: #222c27; }
@@ -616,6 +637,13 @@ body.focus-mode .page.narrow { width: min(760px, calc(100% - 40px)); padding-top
 :root[data-theme="dark"] .ear-demo-group { border-color: #51425a; background: rgba(16,20,18,.4); }
 :root[data-theme="dark"] .ear-note-buttons button:hover,
 :root[data-theme="dark"] .ear-note-buttons button.playing { border-color: #a57ab9; background: #3b2d42; }
+:root[data-theme="dark"] .tonality-scene { border-color: #355361; background: #1c2a30; }
+:root[data-theme="dark"] .tonality-scene-head span { color: #83b5c5; }
+:root[data-theme="dark"] .tonality-scene-head h3 { color: #b8d8e2; }
+:root[data-theme="dark"] .tonality-scene-head > b { color: #9ec9b8; background: #263e35; }
+:root[data-theme="dark"] .tonality-note-path > span { color: #b7d5de; border-color: #3c5965; background: #23343b; }
+:root[data-theme="dark"] .tonality-note-path > span.home { color: #f1c184; border-color: #a66e35; background: #46321f; }
+:root[data-theme="dark"] .tonality-note-path > span.playing { color: white; border-color: #347d67; background: #347d67; }
 :root[data-theme="dark"] .lesson-fretboard { border-color: #36554e; background: #172a26; }
 :root[data-theme="dark"] .lesson-fret-note { border-color: #34524b; background: #22342f; }
 :root[data-theme="dark"] .lesson-fret-note.highlighted { background: #294039; }
@@ -748,6 +776,8 @@ body.focus-mode .page.narrow { width: min(760px, calc(100% - 40px)); padding-top
   .ear-demo-group-head { align-items: stretch; flex-direction: column; }
   .ear-demo-group-head button { width: 100%; }
   .ear-note-buttons { display: grid; grid-template-columns: 1fr 1fr; }
+  .tonality-scene { padding: 17px; }
+  .tonality-actions { display: grid; grid-template-columns: 1fr; }
   .fretboard-demo-heading { align-items: stretch; flex-direction: column; }
   .fretboard-demo-heading button { width: 100%; }
   .scale-run-head { align-items: stretch; flex-direction: column; }

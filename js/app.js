@@ -1,7 +1,7 @@
 /* 单页应用控制器：负责路由、课程渲染与互动实验室。 */
 (function () {
   const course = window.CourseData;
-  const lessons = [...window.StageOneLessons, ...window.StageTwoLessons, ...window.StageThreeLessons, ...window.StageFourLessons, ...window.StageFiveLessons, ...window.StageSixLessons, ...window.StageSevenLessons, ...window.StageEightLessons, ...window.StageNineLessons];
+  const lessons = [...window.StageOneLessons, ...window.StageTwoLessons, ...window.StageThreeLessons, ...window.StageFourLessons, ...window.StageFiveLessons, ...window.StageSixLessons, ...window.StageSevenLessons, ...window.StageEightLessons, ...window.StageNineLessons, ...window.StageTenLessons];
   const ui = window.GuitarComponents;
   const main = document.getElementById('main-content');
   const breadcrumb = document.getElementById('breadcrumb');
@@ -95,6 +95,7 @@
   }
 
   function renderHome() {
+    const availableStages = course.stages.filter(stage => stageLessons(stage.id).length);
     breadcrumb.textContent = '学习首页';
     main.innerHTML = `<div class="page">
       <section class="home-hero">
@@ -112,9 +113,9 @@
       </section>
 
       <section class="home-section">
-        <div class="home-section-heading"><div><div class="eyebrow">从这里选择</div><h2>九个阶段，从基本动作走到看懂和弦</h2></div><a href="#/course">查看完整课程路线 →</a></div>
+        <div class="home-section-heading"><div><div class="eyebrow">从这里选择</div><h2>${availableStages.length} 个阶段，从基本动作走到听懂调性</h2></div><a href="#/course">查看完整课程路线 →</a></div>
         <div class="home-stage-grid">
-          ${course.stages.slice(0,9).map((stage,index) => `<a class="home-stage-card stage-tone-${index + 1}" href="#/lesson/${stage.id}-1">
+          ${availableStages.map((stage,index) => `<a class="home-stage-card stage-tone-${index + 1}" href="#/lesson/${stage.id}-1">
             <div class="home-stage-top"><span>阶段 ${String(stage.id).padStart(2,'0')}</span><b>${stage.tone}</b></div>
             <h3>${stage.title}</h3>
             <p>${stage.short}</p>
@@ -146,8 +147,8 @@
 
   function stageDetail(stageId) {
     const stage = course.stages.find(item => item.id === Number(stageId)) || course.stages[0];
-    const available = stage.id <= 9;
     const availableLessons = stageLessons(stage.id);
+    const available = availableLessons.length > 0;
     const firstInStage = availableLessons[0];
     return `<div class="card stage-detail" id="stage-detail">
       <span class="tag">阶段 ${String(stage.id).padStart(2,'0')} · ${stage.tone}</span>
@@ -167,13 +168,14 @@
     const query = location.hash.split('?')[1];
     const params = new URLSearchParams(query || '');
     const selected = Number(params.get('stage') || 1);
+    const availableStages = course.stages.filter(stage => stageLessons(stage.id).length);
     breadcrumb.textContent = '完整课程 · 24 阶段';
     main.innerHTML = `<div class="page">
       ${pageIntro('Course map','完整课程路线','120 节课被组织为 24 个阶段。顺序不是按术语难度排列，而是按“先能在琴上体验，再解释为什么”排列。')}
       <section class="available-course section">
-        <div class="section-heading"><div><div class="eyebrow">Available now</div><h2>已上线 · 前 9 个完整阶段</h2></div><span class="tag">51 节课可立即学习</span></div>
-        <div class="stage-jump-nav">${course.stages.slice(0,9).map(stage => `<button data-jump-stage="${stage.id}">阶段 ${stage.id} · ${stage.tone}</button>`).join('')}</div>
-        ${course.stages.slice(0,9).map(stage => `<div class="available-stage-group" id="available-stage-${stage.id}"><h3>第 ${stage.id} 阶段 · ${stage.title}</h3><div class="available-course-grid">${stageLessons(stage.id).map(lesson => {
+        <div class="section-heading"><div><div class="eyebrow">Available now</div><h2>已上线 · 前 ${availableStages.length} 个完整阶段</h2></div><span class="tag">${lessons.length} 节课可立即学习</span></div>
+        <div class="stage-jump-nav">${availableStages.map(stage => `<button data-jump-stage="${stage.id}">阶段 ${stage.id} · ${stage.tone}</button>`).join('')}</div>
+        ${availableStages.map(stage => `<div class="available-stage-group" id="available-stage-${stage.id}"><h3>第 ${stage.id} 阶段 · ${stage.title}</h3><div class="available-course-grid">${stageLessons(stage.id).map(lesson => {
           return `<a class="available-lesson-card" href="#/lesson/${lesson.id}"><span class="available-number">${String(lesson.number).padStart(2,'0')}</span><span><small>第 ${lesson.number} 课 · ${lesson.duration} 分钟</small><strong>${lesson.title}</strong></span><b>进入 →</b></a>`;
         }).join('')}</div></div>`).join('')}
       </section>
@@ -256,6 +258,21 @@
     </section>`;
   }
 
+  // 调性感实验让学习者先听见“悬着”与“回家”，再给主音和调性命名。
+  function tonalityDemoCard(lesson) {
+    const demo = lesson.tonalityDemo;
+    if (!demo) return '';
+    return `<section class="lesson-section tonality-demo-section">
+      <div class="eyebrow">调性感实验</div><h2>${demo.title}</h2><p class="muted">${demo.hint}</p>
+      <div class="tonality-scene-grid">${demo.scenes.map((scene,sceneIndex) => `<article class="tonality-scene">
+        <div class="tonality-scene-head"><div><span>${scene.key}</span><h3>${scene.name}</h3></div><b>${scene.badge}</b></div>
+        <p>${scene.description}</p>
+        <div class="tonality-note-path">${scene.notes.map((note,noteIndex) => `<span class="${note[2] === 'home' ? 'home' : ''}" data-tonality-note="${sceneIndex}-${noteIndex}"><b>${note[0]}</b><small>${note[2] === 'home' ? '主音' : note[2] || '经过'}</small></span>`).join('<i>→</i>')}</div>
+        <div class="tonality-actions"><button class="primary-button compact" type="button" data-play-tonality-scene="${sceneIndex}">▶ 播放整段</button><button class="secondary-button compact" type="button" data-play-tonality-home="${sceneIndex}">⌂ 单独听主音</button></div>
+      </article>`).join('')}</div>
+    </section>`;
+  }
+
   function fretboardDemoCard(lesson) {
     const demo = lesson.fretboardDemo;
     if (!demo) return '';
@@ -333,7 +350,7 @@
   function renderLesson(id) {
     const lesson = lessons.find(item => item.id === id);
     if (!lesson) {
-      main.innerHTML = `<div class="page narrow"><div class="empty-state"><h2>这节课仍在编写中</h2><p>完整位置已经放入课程路线。当前可完整学习前 9 个阶段的 51 节课。</p><a class="primary-button" href="#/course">返回课程目录</a></div></div>`;
+      main.innerHTML = `<div class="page narrow"><div class="empty-state"><h2>这节课仍在编写中</h2><p>完整位置已经放入课程路线。当前可完整学习前 10 个阶段的 55 节课。</p><a class="primary-button" href="#/course">返回课程目录</a></div></div>`;
       return;
     }
     const lessonIndex = lessons.findIndex(item => item.id === lesson.id);
@@ -355,6 +372,7 @@
       ${lessonChordGuide(lesson.id)}
       ${tabDemoCard(lesson)}
       ${earDemoCard(lesson)}
+      ${tonalityDemoCard(lesson)}
       ${intervalDemoCard(lesson)}
       ${scaleDemoCard(lesson)}
       ${triadDemoCard(lesson)}
@@ -431,6 +449,37 @@
           button.disabled = false;
           button.textContent = '▶ 连续播放';
         }, notes.length * 460 + 450);
+      }));
+    }
+    if (lesson.tonalityDemo) {
+      document.querySelectorAll('[data-play-tonality-scene]').forEach(button => button.addEventListener('click', () => {
+        const sceneIndex = Number(button.dataset.playTonalityScene);
+        const scene = lesson.tonalityDemo.scenes[sceneIndex];
+        const noteChips = [...document.querySelectorAll(`[data-tonality-note^="${sceneIndex}-"]`)];
+        scene.notes.forEach((note,index) => {
+          ui.playTone(note[1], .72, .105, index * .46);
+          setTimeout(() => {
+            if (!button.isConnected) return;
+            noteChips.forEach(chip => chip.classList.remove('playing'));
+            noteChips[index].classList.add('playing');
+          }, index * 460);
+        });
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = '♪ 正在寻找“家”';
+        setTimeout(() => {
+          if (!button.isConnected) return;
+          button.disabled = false;
+          button.textContent = originalText;
+          noteChips.forEach(chip => chip.classList.remove('playing'));
+        }, scene.notes.length * 460 + 320);
+      }));
+      document.querySelectorAll('[data-play-tonality-home]').forEach(button => button.addEventListener('click', () => {
+        const scene = lesson.tonalityDemo.scenes[Number(button.dataset.playTonalityHome)];
+        if (scene.homeChord) ui.playChord(scene.homeChord);
+        else ui.playTone(scene.homeMidi, 1.2, .11);
+        button.classList.add('playing');
+        setTimeout(() => button.isConnected && button.classList.remove('playing'), 900);
       }));
     }
     if (lesson.intervalDemo) {
@@ -1167,15 +1216,27 @@
       30: [['4 分钟','主音回家感听觉热身'],['8 分钟','C 大调音名与级数'],['7 分钟','全半音结构边弹边说'],['7 分钟','G 或 D 大调推导'],['4 分钟','记录升号出现的位置']],
       45: [['5 分钟','C、G、D 主音听感'],['12 分钟','C 大调指板路线'],['10 分钟','全全半全全全半构造'],['8 分钟','G 大调 F# 专项'],['6 分钟','D 大调 F#、C# 专项'],['4 分钟','闭眼口述结构']],
       60: [['7 分钟','三条大调音阶唱与听'],['15 分钟','C 大调两处指板路线'],['12 分钟','从不同主音推导结构'],['10 分钟','G、D 大调升号核对'],['9 分钟','第八阶段综合测试'],['7 分钟','错音修正与放松']]
+    },
+    9: {
+      20: [['3 分钟','C、Am 根音听觉热身'],['6 分钟','大、小三和弦配方复述'],['7 分钟','一个开放和弦逐弦报音'],['4 分钟','大、小和弦对比试听']],
+      30: [['4 分钟','根音与最低音快速判断'],['8 分钟','0、4、7 与 0、3、7 推导'],['7 分钟','C、G、Am 逐弦拆解'],['7 分钟','同根大、小和弦转换'],['4 分钟','记录一个易混组成音']],
+      45: [['5 分钟','五个开放和弦根音热身'],['12 分钟','随机推导大、小三和弦'],['10 分钟','开放和弦逐弦报音'],['8 分钟','重复音与避弦检查'],['6 分钟','网页三和弦实验'],['4 分钟','闭眼复述两种配方']],
+      60: [['7 分钟','根音和三音听觉热身'],['15 分钟','大、小三和弦推导'],['12 分钟','五个开放和弦结构拆解'],['10 分钟','E/Em、A/Am、D/Dm 对比'],['9 分钟','第九阶段综合测试'],['7 分钟','错题验证与放松']]
+    },
+    10: {
+      20: [['3 分钟','C、G、D 主音单独试听'],['6 分钟','短句停第7级再回主音'],['7 分钟','调性感卡片听辨'],['4 分钟','口述主音与调的区别']],
+      30: [['4 分钟','三组主音与同名和弦'],['8 分钟','C、G、D 大调回家听感'],['7 分钟','网页调性感实验'],['7 分钟','上琴核对候选主音'],['4 分钟','记录一次判断依据']],
+      45: [['5 分钟','主音哼唱与上琴核对'],['12 分钟','三条大调上行下行'],['10 分钟','第7级到主音专项'],['8 分钟','C–G–C 与 G–D–G 对比'],['6 分钟','闭眼调性感听辨'],['4 分钟','复述四步判断法']],
+      60: [['7 分钟','C、G、D 主音与和弦热身'],['15 分钟','三条大调与升号推导'],['12 分钟','短旋律悬停与回家'],['10 分钟','候选主音上琴验证'],['9 分钟','第十阶段综合测试'],['7 分钟','误判复盘与放松']]
     }
   };
 
   function renderPractice(minutes=30, stageNumber=1) {
-    const stage = Math.min(8, Math.max(1, Number(stageNumber)));
+    const stage = Math.min(10, Math.max(1, Number(stageNumber)));
     const stageFirstLesson = stageLessons(stage)[0];
     const plan=practicePlansByStage[stage][minutes];
     breadcrumb.textContent='今日练习';
-    main.innerHTML=`<div class="page narrow">${pageIntro('Daily practice','今天练什么','先选择你正在学的阶段，再选择今天实际拥有的时间。这里不判断进度，只给你一份可立即照做的练习单。')}<div class="card section"><span class="tag">选择练习重点</span><h2 style="margin-top:12px">第 ${stage} 阶段 · ${stageInfo(stage).title}</h2><div class="practice-time-picker">${[1,2,3,4,5,6,7,8].map(n=>`<button class="time-button ${n===stage?'active':''}" data-practice-stage="${n}">阶段 ${n}</button>`).join('')}</div><p class="muted" style="margin-top:18px">再选择今天的练习时长，不需要为了“完整”勉强练满一小时。</p><div class="practice-time-picker">${[20,30,45,60].map(n=>`<button class="time-button ${n===Number(minutes)?'active':''}" data-minutes="${n}">${n} 分钟</button>`).join('')}</div></div><section class="section"><div class="section-heading"><h2>${minutes} 分钟方案</h2><span class="tag">合计 ${minutes} 分钟</span></div><div class="daily-plan">${plan.map((item,i)=>`<label class="plan-item"><span class="plan-time">${item[0]}</span><span><strong>${item[1]}</strong><small class="muted">${i===plan.length-1?'结束前放松双手，不带着紧张离开。':'完成质量优先，不追求速度。'}</small></span><input type="checkbox"></label>`).join('')}</div></section><div class="lesson-footer"><a class="secondary-button" href="#/lesson/${stageFirstLesson.id}">打开本阶段第 1 课</a><button class="primary-button" id="finish-practice">完成今日练习</button></div></div>`;
+    main.innerHTML=`<div class="page narrow">${pageIntro('Daily practice','今天练什么','先选择你正在学的阶段，再选择今天实际拥有的时间。这里不判断进度，只给你一份可立即照做的练习单。')}<div class="card section"><span class="tag">选择练习重点</span><h2 style="margin-top:12px">第 ${stage} 阶段 · ${stageInfo(stage).title}</h2><div class="practice-time-picker">${Array.from({length:10},(_,index)=>index+1).map(n=>`<button class="time-button ${n===stage?'active':''}" data-practice-stage="${n}">阶段 ${n}</button>`).join('')}</div><p class="muted" style="margin-top:18px">再选择今天的练习时长，不需要为了“完整”勉强练满一小时。</p><div class="practice-time-picker">${[20,30,45,60].map(n=>`<button class="time-button ${n===Number(minutes)?'active':''}" data-minutes="${n}">${n} 分钟</button>`).join('')}</div></div><section class="section"><div class="section-heading"><h2>${minutes} 分钟方案</h2><span class="tag">合计 ${minutes} 分钟</span></div><div class="daily-plan">${plan.map((item,i)=>`<label class="plan-item"><span class="plan-time">${item[0]}</span><span><strong>${item[1]}</strong><small class="muted">${i===plan.length-1?'结束前放松双手，不带着紧张离开。':'完成质量优先，不追求速度。'}</small></span><input type="checkbox"></label>`).join('')}</div></section><div class="lesson-footer"><a class="secondary-button" href="#/lesson/${stageFirstLesson.id}">打开本阶段第 1 课</a><button class="primary-button" id="finish-practice">完成今日练习</button></div></div>`;
     document.querySelectorAll('[data-minutes]').forEach(button=>button.addEventListener('click',()=>renderPractice(Number(button.dataset.minutes),stage)));
     document.querySelectorAll('[data-practice-stage]').forEach(button=>button.addEventListener('click',()=>renderPractice(Number(minutes),Number(button.dataset.practiceStage))));
     document.getElementById('finish-practice').addEventListener('click',()=>showToast('今天的练习已完成。停在质量好的地方。'));
